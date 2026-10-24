@@ -26,9 +26,26 @@ Each station is one YouTube or YouTube Music playlist. To swap one:
 Only public playlists work. If a playlist is deleted or made private, its station shows
 "This playlist couldn't load" until you replace it.
 
+## Most played songs first (optional, free)
+
+Add a free YouTube Data API key and every playlist is sorted by YouTube views,
+so the biggest classics play first.
+
+1. Go to https://console.cloud.google.com and create a project (any name).
+2. Open **APIs & Services → Library**, search **YouTube Data API v3**, click **Enable**.
+3. Open **APIs & Services → Credentials → Create credentials → API key**. Copy the key.
+4. Click the key → **Application restrictions → Websites** → add
+   `https://ekantshukla.github.io/*` → **Save**. This stops anyone else from using your key.
+5. In `index.html`, find `const YT_API_KEY = "";` and paste your key between the quotes. Commit.
+
+The free quota is far more than this site needs, and the sorted list is cached in each
+visitor's browser for 3 days.
+
 ## Good to know
 
 - Music only plays on a real website (GitHub Pages, Netlify and so on). Opening `index.html`
   straight from your computer may not play, because YouTube needs a proper web address.
 - If a song's owner blocks it from playing on other sites, the player skips to the next one.
 - Liked songs are saved in each visitor's own browser.
+- Ads come from YouTube. Visitors signed in to YouTube Premium in the same browser usually
+  hear no ads; everyone else may hear one now and then.
