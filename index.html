@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OldSkool.fm</title>
+<meta name="description" content="80s, 90s and 2000s Bollywood classics, nonstop. Free, no login.">
+<meta name="theme-color" content="#0D0D10" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F7F7F8" media="(prefers-color-scheme: light)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+/* Minimal radio: a row of stations (YouTube playlists), then a two-pane player — now playing left, the station's tracklist right. One accent, hairlines, air. */
+:root{
+  --bg:#F7F7F8; --surface:#FFFFFF; --fg:#111114; --muted:#6B6B76; --line:#E6E6EA; --hover:#F0F0F3;
+  --accent:#FF3D6E; --on-accent:#FFFFFF;
+  --d80:#FF3D6E; --d90:#3D7BFF; --d00:#E5A400; --dmix:#18A874;
+  --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --serif:"Instrument Serif",Georgia,"Times New Roman",serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0D0D10; --surface:#16161B; --fg:#F2F2F5; --muted:#8E8E9A; --line:#26262D; --hover:#1D1D23;
+  --accent:#FF5C85; --on-accent:#0D0D10; --d00:#F5B800; --dmix:#2FC48C; color-scheme:dark}}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 84px)}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1200px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+
+/* Header */
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:22px}
+.logo{font-weight:700;font-size:20px;letter-spacing:-.03em}
+.logo em{font-family:var(--serif);font-style:italic;font-weight:400;font-size:1.15em;color:var(--accent);letter-spacing:0;margin-left:1px}
+.live{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.playing .live i{background:var(--accent);box-shadow:0 0 0 0 var(--accent);animation:pulse 1.6s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+
+/* Intro + stations */
+.intro{padding-block:20px 8px}
+.intro h1{font-family:var(--serif);font-weight:400;font-size:clamp(40px,6vw,72px);line-height:1;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.intro h1 em{color:var(--accent)}
+.intro p{color:var(--muted);margin:12px 0 0;max-width:52ch}
+.stations{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(168px,1fr);gap:12px;overflow-x:auto;padding-block:24px 8px;scrollbar-width:none;scroll-snap-type:x mandatory}
+.stations::-webkit-scrollbar{display:none}
+.st{scroll-snap-align:start;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:14px;transition:border-color .15s,transform .15s;min-width:0}
+.st:hover{transform:translateY(-2px)}
+.st[aria-pressed="true"]{border-color:var(--fg)}
+.st .art{aspect-ratio:1;border-radius:10px;background:var(--c);position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:10px}
+.st .art::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 75% 20%,rgba(255,255,255,.35),transparent 55%)}
+.st .art b{position:relative;font-family:var(--serif);font-style:italic;font-weight:400;font-size:44px;line-height:.85;color:#fff;letter-spacing:-.02em}
+.st .eq{position:absolute;top:10px;right:10px;width:14px;height:14px;opacity:0}
+.st[aria-pressed="true"] .eq{opacity:1}
+.st .nm{font-weight:600;line-height:1.25;font-size:14px}
+.st .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.st.add .art{background:var(--hover);align-items:center;justify-content:center;color:var(--muted)}
+.st.add .art::before{display:none}
+.st.add .art svg{width:28px;height:28px}
+
+/* Layout */
+.app{display:grid;grid-template-columns:380px minmax(0,1fr);gap:48px;align-items:start;padding-block:28px 40px}
+
+/* Now playing */
+.np{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px)}
+.screen{position:relative;aspect-ratio:16/9;width:100%;border-radius:16px;overflow:hidden;background:#000;box-shadow:0 20px 50px -24px rgba(0,0,0,.45)}
+.screen iframe,#yt{position:absolute;inset:0;width:100%;height:100%;border:0}
+.cover{position:absolute;inset:0;background:var(--c,#222);display:grid;place-items:center;border:0;padding:0;width:100%}
+.cover::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 75% 20%,rgba(255,255,255,.3),transparent 55%)}
+.cover .big{position:relative;z-index:1;width:64px;height:64px;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;box-shadow:0 8px 30px rgba(0,0,0,.3);transition:transform .15s}
+.cover:hover .big{transform:scale(1.06)}
+.meta{margin-top:22px;min-width:0}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--c,var(--muted));flex:none}
+.np h2{font-size:24px;line-height:1.2;letter-spacing:-.025em;margin:8px 0 4px;font-weight:700;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.np .artist{color:var(--muted);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.progress{margin-top:22px}
+.range{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:4px;background:linear-gradient(var(--fg),var(--fg)) 0/var(--p,0%) 100% no-repeat,var(--line);cursor:pointer;margin:0}
+.range::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--fg);border:0}
+.range::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--fg);border:0}
+.times{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px;font-variant-numeric:tabular-nums}
+.ctrls{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+.ib{background:none;border:0;padding:8px;border-radius:50%;color:var(--fg);display:grid;place-items:center;transition:background .15s,color .15s,transform .15s}
+.ib:hover{background:var(--hover)}
+.ib svg{width:20px;height:20px}
+.ib.on{color:var(--accent)}
+.ib.sm svg{width:18px;height:18px}
+.pp{width:56px;height:56px;background:var(--fg);color:var(--bg)}
+.pp:hover{background:var(--fg);transform:scale(1.04)}
+.pp svg{width:22px;height:22px}
+.vol{display:flex;align-items:center;gap:10px;margin-top:16px;color:var(--muted)}
+.vol svg{width:16px;height:16px;flex:none}
+.links{display:flex;gap:16px;margin-top:22px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.links a{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.links a:hover{color:var(--fg)}
+.links svg{width:14px;height:14px}
+
+/* Tracklist */
+.lhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.lhead h3{margin:0;font-size:30px;font-weight:600;letter-spacing:-.03em;line-height:1.1}
+.lhead h3 em{font-family:var(--serif);font-style:italic;font-weight:400}
+.lhead span{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+ol.list{list-style:none;margin:0;padding:6px 0 0}
+.row{display:grid;grid-template-columns:28px 64px minmax(0,1fr) 36px;gap:14px;align-items:center;padding:8px 10px;border-radius:10px;cursor:pointer;transition:background .12s}
+.row:hover{background:var(--hover)}
+.row .n{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;position:relative}
+.row .th{width:64px;aspect-ratio:16/9;border-radius:6px;background:var(--hover) center/cover no-repeat}
+.row .ti{min-width:0}
+.row .ti b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .ti span{display:block;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .heart{color:var(--muted)}
+.row .heart.on{color:var(--accent)}
+.row.cur b{color:var(--accent)}
+.row.cur .n{color:transparent}
+.bars{display:block;width:12px;height:12px;margin-left:auto;
+  background:linear-gradient(var(--accent),var(--accent)) 0 100%/3px 40% no-repeat,linear-gradient(var(--accent),var(--accent)) 50% 100%/3px 100% no-repeat,linear-gradient(var(--accent),var(--accent)) 100% 100%/3px 65% no-repeat}
+.row.cur .n .bars{position:absolute;right:0;top:50%;margin-top:-6px}
+.playing .bars{animation:eq .9s ease-in-out infinite alternate}
+@keyframes eq{0%{background-size:3px 30%,3px 90%,3px 55%}50%{background-size:3px 85%,3px 40%,3px 100%}100%{background-size:3px 55%,3px 100%,3px 30%}}
+.skel b,.skel span{color:transparent!important;background:var(--hover);border-radius:4px;width:70%}
+.skel span{width:40%;margin-top:4px}
+.empty{padding:48px 0;text-align:center;color:var(--muted)}
+
+.btn.wide{display:flex;justify-content:center;text-decoration:none;margin-top:20px;padding:14px 18px;background:var(--accent);color:var(--on-accent)}
+.fb .cover{text-decoration:none}
+.fbmsg{line-height:1.7}
+.fbmsg b{color:var(--fg)}
+/* Add playlist sheet */
+.sheet{border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:18px;margin-top:16px;display:flex;flex-direction:column;gap:12px}
+.sheet p{margin:0;color:var(--muted);font-size:14px}
+.sheet form{display:flex;gap:8px;flex-wrap:wrap}
+.sheet input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:10px 16px;outline:0;font-size:14px}
+.sheet input:focus{border-color:var(--fg)}
+.btn{border:0;border-radius:999px;padding:10px 18px;font-weight:600;background:var(--fg);color:var(--bg)}
+.btn.ghost{background:transparent;color:var(--muted)}
+
+/* Mini bar */
+.mini{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line);
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;gap:12px;transform:translateY(110%);transition:transform .25s}
+.mini.show{transform:none}
+.mini .th{width:64px;aspect-ratio:16/9;border-radius:6px;background:var(--hover) center/cover;flex:none}
+.mini .ti{flex:1;min-width:0}
+.mini .ti b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini .ti span{display:block;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini .bar{position:absolute;left:0;top:-1px;height:2px;background:var(--accent);width:var(--p,0%)}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;background:var(--fg);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:14px;transition:.2s;pointer-events:none;z-index:30;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+footer .wrap{padding-block:24px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr);gap:28px}
+  .np{position:static}
+}
+@media (max-width:560px){
+  .row{grid-template-columns:64px minmax(0,1fr) 36px;gap:12px;padding:8px 4px}
+  .row .n{display:none}
+  .lhead h3{font-size:24px}
+  .stations{grid-auto-columns:150px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="logo">OldSkool<em>.fm</em></div>
+    <div class="live"><i></i><span id="liveTxt">Off air</span></div>
+  </div>
+</header>
+
+<section class="wrap intro">
+  <h1>Bollywood classics, <em>nonstop.</em></h1>
+  <p>Tap a station below and the music starts. 80s, 90s and 2000s Hindi hits, free, no sign-up.</p>
+  <div class="stations" id="stations" role="group" aria-label="Stations"></div>
+</section>
+
+<main class="wrap app">
+  <section class="np" id="np" aria-label="Now playing">
+    <div class="screen">
+      <div id="yt"></div>
+      <button class="cover" id="cover" type="button" aria-label="Play station">
+        <span class="big"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+      </button>
+    </div>
+    <div class="meta">
+      <div class="eyebrow"><span class="dot" id="npDot"></span><span id="npEyebrow">Station</span></div>
+      <h2 id="npTitle">Tap play to start</h2>
+      <p class="artist" id="npArtist">&nbsp;</p>
+    </div>
+    <div class="progress">
+      <input class="range" id="seek" type="range" min="0" max="1000" value="0" aria-label="Seek">
+      <div class="times"><span id="tCur">0:00</span><span id="tDur">0:00</span></div>
+    </div>
+    <div class="ctrls">
+      <button class="ib sm" id="shuf" type="button" aria-label="Shuffle" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
+      <button class="ib" id="prev" type="button" aria-label="Previous"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM9.5 12 18 18V6z"/></svg></button>
+      <button class="ib pp" id="play" type="button" aria-label="Play"><svg id="ppIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="ib" id="next" type="button" aria-label="Next"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+      <button class="ib sm" id="rep" type="button" aria-label="Repeat" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg></button>
+    </div>
+    <div class="vol">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7"/></svg>
+      <input class="range" id="vol" type="range" min="0" max="100" value="80" aria-label="Volume">
+    </div>
+    <div class="links">
+      <a id="ytmLink" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Listen in the YouTube Music app</a>
+    </div>
+  </section>
+
+  <section aria-label="Tracklist">
+    <div class="lhead"><h3 id="listTitle">The <em>nineties</em></h3><span id="count"></span></div>
+    <ol class="list" id="list"></ol>
+  </section>
+</main>
+
+<footer><div class="wrap"><span>OldSkool.fm · Songs stream from YouTube</span><span>Made for people born after the cassette died.</span></div></footer>
+
+<div class="mini" id="mini">
+  <div class="bar" id="miniBar"></div>
+  <div class="th" id="miniTh"></div>
+  <div class="ti"><b id="miniT"></b><span id="miniA"></span></div>
+  <button class="ib" id="miniPlay" type="button" aria-label="Play"><svg id="miniIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+  <button class="ib" id="miniNext" type="button" aria-label="Next"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============================================================
+   STATIONS — each one is a free public YouTube / YouTube Music playlist.
+   To add or swap one, copy the part after "list=" from the playlist link.
+   ============================================================ */
+const STATIONS = [
+  { key:"90s",  name:"90s Bollywood Hits",     sub:"Kumar Sanu era",       label:"90s",  color:"var(--d90)",  list:"PLMRKdK25AuPVjHl9Kdb-gkBy0Cm7Zi2xo", title:"The <em>nineties</em>" },
+  { key:"80s",  name:"80s Bollywood",          sub:"Disco & golden oldies",label:"80s",  color:"var(--d80)",  list:"PL08C6kx79n_InNdRv0k-3VVBv1d4VwzPS", title:"The <em>eighties</em>" },
+  { key:"00s",  name:"2000s Nostalgia",        sub:"Flip-phone romance",   label:"00s",  color:"var(--d00)",  list:"PLC6CF5YRxBLBfHmJ9I8RvYXDTHC1Z3gUP", title:"The <em>two-thousands</em>" },
+  { key:"90all",name:"All-Time 90s",           sub:"Evergreen anthems",    label:"’90",  color:"#6A4CFF",     list:"PLqyhv-UBGjwyp1pJCtkf_6ww4WkoIUDaL", title:"All-time <em>nineties</em>" },
+  { key:"top25",name:"Top 25 of 2000–2010",    sub:"The decade's best",    label:"25",   color:"#FF7A2F",     list:"PLMRKdK25AuPVWjRkvga2A58T8wFdCoM3U", title:"Top <em>twenty-five</em>" },
+  { key:"y2k",  name:"Superhits of 2000",      sub:"Y2K Bollywood",        label:"Y2K",  color:"#0FA3B1",     list:"PLdHyFLAZY0Mn5YUib9X2XxsS_pOBOIbO1", title:"Superhits of <em>2000</em>" },
+  { key:"hwy",  name:"Highway Mix",            sub:"Long-drive songs",     label:"km",   color:"var(--dmix)", list:"PLgObA3pAqvOh87Z03QG8Z4xE-uqlAWSBy", title:"The <em>highway</em> mix" }
+];
+
+/* ============================================================ */
+const $=s=>document.getElementById(s);
+const store={get(k,f){try{const v=localStorage.getItem(k);return v==null?f:JSON.parse(v)}catch(e){return f}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=s=>{s=Math.max(0,Math.floor(s||0));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
+const thumb=id=>`url(https://i.ytimg.com/vi/${id}/mqdefault.jpg)`;
+const ICON={play:'<path d="M8 5v14l11-7z"/>',pause:'<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>',
+  heart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20s-7-4.4-9.2-8.6C1.2 8.1 3.3 4.5 6.9 4.5c2 0 3.5 1.1 5.1 3 1.6-1.9 3.1-3 5.1-3 3.6 0 5.7 3.6 4.1 6.9C19 15.6 12 20 12 20z"/></svg>'};
+
+/* State */
+const titles=store.get("osfm.titles",{});          // videoId -> {t,a}
+let liked=store.get("osfm.liked",[]);               // [videoId]
+let custom=store.get("osfm.custom",[]);             // user-added stations
+let station=null, ids=[], player=null, ready=false, started=false, isPlaying=false, shuffle=false, repeat=false, pending=null;
+
+const allStations=()=>[...STATIONS,...custom,{key:"liked",name:"Liked songs",sub:"Saved in this browser",label:"♥",color:"var(--accent)",title:"Your <em>liked</em> songs",isLiked:true}];
+
+/* Station cards */
+function renderStations(){
+  $("stations").innerHTML=allStations().filter(s=>!(fallback&&s.isLiked)).map(s=>`
+    <button class="st" type="button" data-k="${esc(s.key)}" aria-pressed="${station&&station.key===s.key}">
+      <span class="art" style="--c:${s.color}"><span class="bars eq"></span><b>${esc(s.label)}</b></span>
+      <span><span class="nm">${esc(s.name)}</span><span class="sub" style="display:block">${esc(s.sub)}</span></span>
+    </button>`).join("");
+}
+
+/* Tracklist */
+function renderList(){
+  const curId=ready&&started&&player.getVideoData?player.getVideoData().video_id:null;
+  $("listTitle").innerHTML=station.title;
+  if(station.isLiked&&!liked.length){$("count").textContent="";$("list").innerHTML=`<li class="empty">Tap the heart on any song to save it here.</li>`;return}
+  if(!ids.length){$("count").textContent="Loading…";$("list").innerHTML=Array.from({length:8},()=>`<li class="row skel"><span class="n"></span><span class="th"></span><span class="ti"><b>.</b><span>.</span></span><span></span></li>`).join("");return}
+  $("count").textContent=ids.length+" songs";
+  $("list").innerHTML=ids.map((id,i)=>{const m=titles[id];const on=liked.includes(id);
+    return `<li class="row${id===curId?" cur":""}${m?"":" skel"}" data-i="${i}" data-id="${id}" tabindex="0">
+      <span class="n">${i+1}<span class="bars"></span></span>
+      <span class="th" style="background-image:${thumb(id)}"></span>
+      <span class="ti"><b>${m?esc(m.t):"Loading"}</b><span>${m?esc(m.a):"…"}</span></span>
+      <button class="ib sm heart${on?" on":""}" type="button" data-like="${id}" aria-label="Like" aria-pressed="${on}">${ICON.heart}</button>
+    </li>`}).join("");
+  fetchTitles();
+}
+
+/* Song names: YouTube's player only gives the playing song's title,
+   so names for the list come from noembed (free, no key). */
+let fetching=false;
+async function fetchTitles(){
+  if(fetching)return;fetching=true;
+  const todo=ids.filter(id=>!titles[id]);
+  for(let k=0;k<todo.length;k+=6){
+    await Promise.all(todo.slice(k,k+6).map(async id=>{
+      try{const r=await fetch("https://noembed.com/embed?url="+encodeURIComponent("https://www.youtube.com/watch?v="+id));
+        const j=await r.json(); if(j.title){titles[id]=clean(j.title,j.author_name);updateRow(id)}}catch(e){}
+    }));
+    store.set("osfm.titles",titles);
+  }
+  fetching=false;
+}
+function clean(t,a){
+  // "Tujhe Dekha To | Dilwale Dulhania Le Jayenge | SRK, Kajol" -> title + rest
+  let title=t, artist=a||"";
+  const parts=t.split(/\s[|•\-–—]\s/);
+  if(parts.length>1){title=parts[0];artist=parts.slice(1,3).join(" · ")}
+  title=title.replace(/\((official|full|lyrical|video|hd|4k)[^)]*\)/ig,"").replace(/\s{2,}/g," ").trim();
+  return {t:title||t,a:artist};
+}
+function updateRow(id){
+  const m=titles[id];
+  document.querySelectorAll(`.row[data-id="${id}"]`).forEach(r=>{r.classList.remove("skel");r.querySelector(".ti b").textContent=m.t;r.querySelector(".ti span").textContent=m.a});
+}
+
+/* Choose station */
+function selectStation(key,autoplay){
+  station=allStations().find(s=>s.key===key)||STATIONS[0];
+  store.set("osfm.station",station.key);
+  ids=station.isLiked?[...liked]:[];
+  renderStations();renderList();
+  $("cover").style.setProperty("--c",station.color);$("npDot").style.setProperty("--c",station.color);
+  $("npEyebrow").textContent=station.name;
+  if($("ytmLink")){$("ytmLink").hidden=!!station.isLiked;
+  if(station.list)$("ytmLink").href="https://music.youtube.com/playlist?list="+station.list;}
+  if(fallback){fbUpdate();return}
+  if(!started){$("npTitle").textContent="Tap play to start";$("npArtist").textContent=station.sub}
+  if(fallback){fbUpdate();return}
+  load(autoplay);
+}
+function load(autoplay,index=0){
+  if(!ready){pending={autoplay,index};return}
+  if(station.isLiked&&!liked.length)return;
+  const fn=autoplay?"loadPlaylist":"cuePlaylist";
+  if(autoplay){started=true;$("cover").hidden=true}
+  if(station.isLiked)player[fn]([...liked],index);
+  else player[fn]({list:station.list,listType:"playlist",index});
+  waitForPlaylist();
+}
+let waitT;
+function waitForPlaylist(){
+  clearTimeout(waitT);let tries=0;
+  const tick=()=>{const p=player.getPlaylist&&player.getPlaylist();
+    if(p&&p.length){ids=p;renderList();player.setShuffle(shuffle);player.setLoop(repeat);return}
+    if(++tries<40)waitT=setTimeout(tick,250);
+    else if(!ids.length){$("count").textContent="";$("list").innerHTML=`<li class="empty">This playlist couldn't load. It may be private or removed.</li>`}};
+  tick();
+}
+
+/* Now playing */
+function nowPlaying(){
+  if(!ready||!player.getVideoData)return;
+  const d=player.getVideoData();if(!d||!d.video_id)return;
+  if(!titles[d.video_id]&&d.title){titles[d.video_id]=clean(d.title,d.author);store.set("osfm.titles",titles);updateRow(d.video_id)}
+  const m=titles[d.video_id]||{t:d.title,a:d.author};
+  $("npTitle").textContent=m.t||"…";$("npArtist").textContent=m.a||station.name;
+  $("miniT").textContent=m.t||"";$("miniA").textContent=m.a||"";$("miniTh").style.backgroundImage=thumb(d.video_id);
+  document.title=`${m.t} — OldSkool.fm`;
+  document.querySelectorAll(".row").forEach(r=>r.classList.toggle("cur",r.dataset.id===d.video_id));
+  if("mediaSession" in navigator&&m.t){navigator.mediaSession.metadata=new MediaMetadata({title:m.t,artist:m.a||"",album:"OldSkool.fm · "+station.name,artwork:[{src:`https://i.ytimg.com/vi/${d.video_id}/hqdefault.jpg`,sizes:"480x360",type:"image/jpeg"}]})}
+}
+function setPlaying(p){
+  isPlaying=p;document.body.classList.toggle("playing",p);
+  $("liveTxt").textContent=p?"On air · "+station.name:"Paused";
+  const svg=p?ICON.pause:ICON.play;$("ppIcon").innerHTML=svg;$("miniIcon").innerHTML=svg;
+  $("play").setAttribute("aria-label",p?"Pause":"Play");$("miniPlay").setAttribute("aria-label",p?"Pause":"Play");
+  if("mediaSession" in navigator)navigator.mediaSession.playbackState=p?"playing":"paused";
+}
+
+/* YouTube player */
+window.onYouTubeIframeAPIReady=function(){
+  player=new YT.Player("yt",{width:"100%",height:"100%",
+    playerVars:{playsinline:1,rel:0,controls:0,disablekb:1,iv_load_policy:3,fs:0,origin:location.origin},
+    events:{
+      onReady(){ready=true;player.setVolume(+$("vol").value);if(pending){const p=pending;pending=null;load(p.autoplay,p.index)}},
+      onStateChange(e){
+        if(e.data===YT.PlayerState.PLAYING){started=true;$("cover").hidden=true;setPlaying(true);nowPlaying()}
+        else if(e.data===YT.PlayerState.PAUSED)setPlaying(false);
+        else if(e.data===YT.PlayerState.ENDED)setPlaying(false);
+        else if(e.data===YT.PlayerState.BUFFERING||e.data===YT.PlayerState.CUED)nowPlaying();
+      },
+      onError(){toast("This song can't play outside YouTube. Skipping.");setTimeout(()=>player.nextVideo(),600)}
+    }});
+};
+const tag=document.createElement("script");tag.src="https://www.youtube.com/iframe_api";
+tag.onerror=goFallback;document.head.appendChild(tag);
+setTimeout(()=>{if(!window.YT||!window.YT.Player)goFallback()},15000);
+
+/* Fallback: where the page can't embed YouTube, each station opens in the YouTube Music app instead. */
+let fallback=false;
+function goFallback(){
+  if(fallback||ready)return;fallback=true;document.body.classList.add("fb");
+  $("np").innerHTML=`<div class="screen"><a class="cover" id="cover" target="_blank" rel="noopener" href="#">
+      <span class="big"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></a></div>
+    <div class="meta"><div class="eyebrow"><span class="dot" id="npDot"></span><span id="npEyebrow"></span></div>
+    <h2 id="npTitle"></h2><p class="artist">Opens in the free YouTube Music app or website.</p></div>
+    <a class="btn wide" id="fbBtn" target="_blank" rel="noopener" href="#">Play on YouTube Music</a>`;
+  renderStations();fbUpdate();
+}
+function fbUpdate(){
+  const url=station.isLiked?"https://music.youtube.com/watch_videos?video_ids="+liked.join(","):"https://music.youtube.com/playlist?list="+station.list;
+  ["cover","fbBtn"].forEach(i=>{const a=$(i);if(a)a.href=url});
+  $("cover").style.setProperty("--c",station.color);$("npDot").style.setProperty("--c",station.color);
+  $("npEyebrow").textContent=station.sub;$("npTitle").textContent=station.name;
+  $("count").textContent="";
+  $("list").innerHTML=station.isLiked&&!liked.length?`<li class="empty">No liked songs yet.</li>`:
+    `<li class="empty fbmsg"><b>${station.name}</b><br>Tap <b>Play on YouTube Music</b> to hear the full playlist.</li>`;
+}
+
+/* Progress */
+let seeking=false;
+setInterval(()=>{
+  if(!ready||!player.getDuration)return;
+  const d=player.getDuration()||0,c=player.getCurrentTime()||0,p=d?c/d*100:0;
+  if(!seeking){$("seek").value=Math.round(p*10);$("seek").style.setProperty("--p",p+"%")}
+  $("miniBar").style.setProperty("--p",p+"%");$("tCur").textContent=fmt(c);$("tDur").textContent=fmt(d);
+},500);
+$("seek").addEventListener("input",e=>{seeking=true;e.target.style.setProperty("--p",e.target.value/10+"%")});
+$("seek").addEventListener("change",e=>{seeking=false;if(ready)player.seekTo(player.getDuration()*e.target.value/1000,true)});
+$("vol").addEventListener("input",e=>{e.target.style.setProperty("--p",e.target.value+"%");if(ready)player.setVolume(+e.target.value)});
+$("vol").style.setProperty("--p","80%");
+
+/* Controls */
+function togglePlay(){
+  if(!ready)return toast("Player is still loading…");
+  if(!started){started=true;$("cover").hidden=true;player.playVideo();return}
+  isPlaying?player.pauseVideo():player.playVideo();
+}
+$("play").onclick=togglePlay;$("miniPlay").onclick=togglePlay;$("cover").onclick=togglePlay;
+$("next").onclick=()=>ready&&player.nextVideo();$("miniNext").onclick=()=>ready&&player.nextVideo();
+$("prev").onclick=()=>{if(!ready)return;player.getCurrentTime()>4?player.seekTo(0,true):player.previousVideo()};
+$("shuf").onclick=e=>{shuffle=!shuffle;e.currentTarget.classList.toggle("on",shuffle);e.currentTarget.setAttribute("aria-pressed",shuffle);if(ready)player.setShuffle(shuffle);toast(shuffle?"Shuffle on":"Shuffle off")};
+$("rep").onclick=e=>{repeat=!repeat;e.currentTarget.classList.toggle("on",repeat);e.currentTarget.setAttribute("aria-pressed",repeat);if(ready)player.setLoop(repeat);toast(repeat?"Repeat on":"Repeat off")};
+if("mediaSession" in navigator){
+  navigator.mediaSession.setActionHandler("play",()=>ready&&player.playVideo());
+  navigator.mediaSession.setActionHandler("pause",()=>ready&&player.pauseVideo());
+  navigator.mediaSession.setActionHandler("nexttrack",()=>ready&&player.nextVideo());
+  navigator.mediaSession.setActionHandler("previoustrack",()=>ready&&player.previousVideo());
+}
+document.addEventListener("keydown",e=>{if(e.code==="Space"&&!/INPUT|BUTTON|LI|A/.test(e.target.tagName)){e.preventDefault();togglePlay()}});
+
+/* Stations + add playlist */
+$("stations").addEventListener("click",e=>{
+  const b=e.target.closest(".st");if(b){selectStation(b.dataset.k,!fallback);document.getElementById("np").scrollIntoView({behavior:"smooth",block:"start"})}
+});
+
+/* Tracklist clicks */
+$("list").addEventListener("click",e=>{
+  const h=e.target.closest("[data-like]");
+  if(h){const id=h.dataset.like;liked=liked.includes(id)?liked.filter(x=>x!==id):[...liked,id];store.set("osfm.liked",liked);
+    h.classList.toggle("on",liked.includes(id));h.setAttribute("aria-pressed",liked.includes(id));toast(liked.includes(id)?"Added to Liked songs":"Removed from Liked songs");
+    if(station.isLiked){ids=[...liked];renderList()}return}
+  const r=e.target.closest(".row");if(r&&r.dataset.i){
+    if(!ready)return;started=true;$("cover").hidden=true;player.playVideoAt(+r.dataset.i)}
+});
+$("list").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("row")){e.preventDefault();e.target.click()}});
+
+/* Mini player when the main player scrolls away */
+new IntersectionObserver(([en])=>$("mini").classList.toggle("show",!en.isIntersecting&&started),{threshold:0}).observe($("np"));
+
+let tt;function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),2200)}
+
+/* Start */
+selectStation(store.get("osfm.station","90s"),false);
+</script>
+</body>
+</html>
