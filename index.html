@@ -136,18 +136,18 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
 .res-msg{padding:16px;text-align:center;color:var(--muted);font-size:14px}
 .res-head{padding:10px 10px 6px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--blush)}
 @media (max-width:600px){
-  header .wrap{gap:10px;padding-block:10px;align-items:center}
-  header .logo{font-size:25px;height:42px;display:flex;align-items:center;line-height:1}
-  header .hdr-right{height:42px;display:flex;align-items:center}
-  header .gsearch-wrap{max-width:none;margin:0;height:42px;display:flex;align-items:center}
-  header .search{width:100%;margin:0;height:42px;padding:0 12px;gap:8px}
+  header .wrap{gap:10px;padding-block:10px;align-items:center;padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px))}
+  header .logo{font-size:28px;letter-spacing:-.02em;margin:0;padding:0;height:40px;display:flex;align-items:center;line-height:1}
+  header .hdr-right{height:40px;display:flex;align-items:center}
+  header .gsearch-wrap{max-width:none;margin:0;height:40px;display:flex;align-items:center}
+  header .search{width:100%;margin:0;height:40px;padding:0 12px;gap:8px}
   header .search svg{width:16px;height:16px}
   header .search input{font-size:16px;height:100%}
-  header .menu-btn{width:42px;height:42px;margin-right:-8px}
-  header .menu-btn svg{width:24px;height:24px}
+  header .menu-btn{width:36px;height:40px;margin-right:0;place-items:center end;padding:0}
+  header .menu-btn svg{width:22px;height:22px}
   .results{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 68px);max-height:70vh}
 }
-@media (max-width:360px){header .logo{font-size:22px}}
+@media (max-width:360px){header .logo{font-size:24px}}
 ol.list{list-style:none;margin:0;padding:0;max-height:min(62vh,640px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
 .row{display:grid;grid-template-columns:22px 48px minmax(0,1fr) 40px;gap:14px;align-items:center;padding:8px 10px;border-radius:16px;cursor:pointer;transition:background .15s}
 .row:hover{background:var(--glass-2)}
@@ -295,7 +295,7 @@ footer .by b{font-family:var(--serif);font-style:italic;font-weight:400;font-siz
     <div class="hdr-right">
       <div class="live"><b></b><span id="liveTxt">Tap play</span></div>
       <button class="menu-btn" id="menuBtn" type="button" aria-label="Open playlists menu" aria-expanded="false" aria-controls="drawer">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2.5 7h19M2.5 12h19M2.5 17h19"/></svg>
       </button>
     </div>
   </div>
