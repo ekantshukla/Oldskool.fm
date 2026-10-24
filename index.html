@@ -119,8 +119,8 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
 .search input::placeholder{color:var(--faint)}
 .search input::-webkit-search-cancel-button{filter:invert(1);opacity:.6}
 .nomatch{margin:0;padding:28px 16px;text-align:center;color:var(--muted)}
-.gsearch-wrap{position:relative;flex:1;max-width:520px;min-width:0;margin:0 auto;z-index:20}
-.search{display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:16px;background:rgba(255,255,255,.09);border:1px solid var(--line);color:var(--muted);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transition:border-color .2s,background .2s,box-shadow .2s}
+.gsearch-wrap{position:relative;flex:1;max-width:420px;min-width:0;margin:0 auto;z-index:20}
+.search{display:flex;align-items:center;gap:10px;height:42px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.09);border:1px solid var(--line);color:var(--muted);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transition:border-color .2s,background .2s,box-shadow .2s}
 .search:focus-within{border-color:rgba(255,194,209,.6);background:rgba(255,255,255,.13);box-shadow:0 0 0 4px rgba(255,111,145,.15)}
 .search svg{width:20px;height:20px;flex:none}
 .search input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);font-size:16px}
@@ -137,14 +137,17 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
 .res-msg{padding:16px;text-align:center;color:var(--muted);font-size:14px}
 .res-head{padding:10px 10px 6px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--blush)}
 @media (max-width:600px){
-  header .wrap{gap:10px}
-  .logo{font-size:22px}
-  .menu-btn{width:42px;height:42px}
-  .search{padding:10px 12px}
-  .search svg{width:17px;height:17px}
-  .results{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 72px);max-height:70vh}
+  header .wrap{gap:10px;padding-block:10px}
+  .logo{font-size:19px}
+  .gsearch-wrap{max-width:none;margin:0}
+  .search{height:36px;padding:0 12px;gap:8px}
+  .search svg{width:15px;height:15px}
+  .search input{font-size:16px}
+  .menu-btn{width:36px;height:36px;margin-right:-6px}
+  .menu-btn svg{width:22px;height:22px}
+  .results{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 62px);max-height:70vh}
 }
-@media (max-width:360px){.logo i{display:none}}
+@media (max-width:350px){.logo i{display:none}}
 ol.list{list-style:none;margin:0;padding:0;max-height:min(62vh,640px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
 .row{display:grid;grid-template-columns:22px 48px minmax(0,1fr) 40px;gap:14px;align-items:center;padding:8px 10px;border-radius:16px;cursor:pointer;transition:background .15s}
 .row:hover{background:var(--glass-2)}
@@ -168,8 +171,9 @@ ol.list{list-style:none;margin:0;padding:0;max-height:min(62vh,640px);overflow-y
 
 /* Menu (3 lines, top right) */
 .hdr-right{display:flex;align-items:center;gap:14px}
-.menu-btn{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:grid;place-items:center;color:var(--text)}
-.menu-btn svg{width:20px;height:20px}
+.menu-btn{width:44px;height:44px;border-radius:12px;border:0;background:transparent;display:grid;place-items:center;color:var(--text);transition:background .15s}
+.menu-btn:hover{background:var(--glass-2)}
+.menu-btn svg{width:24px;height:24px}
 .scrim{position:fixed;inset:0;background:rgba(10,4,20,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:40;opacity:0;transition:opacity .25s}
 .scrim.open{opacity:1}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(340px,86vw);z-index:41;background:radial-gradient(120% 60% at 100% 0%,rgba(255,111,145,.28),transparent 60%),radial-gradient(90% 50% at 0% 100%,rgba(155,89,255,.25),transparent 60%),#1E1033;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-left:1px solid var(--line);
@@ -205,6 +209,21 @@ ol.list{list-style:none;margin:0;padding:0;max-height:min(62vh,640px);overflow-y
 .mini .pp svg{width:20px;height:20px}
 .mini .bar{position:absolute;left:18px;right:18px;bottom:2px;height:2px;border-radius:2px;background:rgba(255,255,255,.1);overflow:hidden}
 .mini .bar i{display:block;height:100%;width:var(--p,0%);background:linear-gradient(90deg,var(--rose),var(--gold))}
+
+/* "Song starts after the ad" overlay */
+.brk{position:absolute;inset:6%;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:16%;
+  background:radial-gradient(circle,rgba(30,12,48,.9) 55%,rgba(30,12,48,.75));backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  box-shadow:0 0 0 1px rgba(255,194,209,.25),0 0 60px -10px rgba(255,111,145,.6);opacity:0;transform:scale(.94);pointer-events:none;transition:opacity .35s,transform .35s}
+.brk b{font-family:var(--serif);font-weight:400;font-size:24px;line-height:1.1;color:#fff}
+.brk span{font-size:12px;line-height:1.45;color:var(--muted)}
+.brk-dots{display:flex;gap:6px}
+.brk-dots i{width:7px;height:7px;border-radius:50%;background:var(--rose);animation:bounce 1.2s infinite ease-in-out}
+.brk-dots i:nth-child(2){animation-delay:.15s}.brk-dots i:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.5}40%{transform:translateY(-6px);opacity:1}}
+.on-break .brk{opacity:1;transform:none}
+.on-break .vinyl{animation-play-state:paused}
+.on-break .arm{transform:rotate(-24deg)}
+.on-break .row.cur .n::after{animation-play-state:paused}
 
 /* Audio engine: YouTube player kept off-screen visually */
 #engine{position:fixed;right:0;bottom:0;width:200px;height:200px;opacity:0;pointer-events:none;z-index:-5;overflow:hidden}
@@ -259,7 +278,7 @@ footer .by b{font-family:var(--serif);font-style:italic;font-weight:400;font-siz
     <div class="gsearch-wrap">
       <label class="search" for="q">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-        <input id="q" type="search" placeholder="Search songs or singers" autocomplete="off" enterkeyhint="search" aria-controls="results">
+        <input id="q" type="search" placeholder="Search songs" autocomplete="off" enterkeyhint="search" aria-controls="results">
       </label>
       <div class="results glass" id="results" role="listbox" hidden></div>
     </div>
@@ -276,6 +295,10 @@ footer .by b{font-family:var(--serif);font-style:italic;font-weight:400;font-siz
   <section class="glass player" aria-label="Now playing">
     <div class="vinyl-wrap">
       <div class="vinyl"><div class="label" id="art"></div></div>
+      <div class="brk" id="brk" role="status" aria-live="polite">
+        <div class="brk-dots"><i></i><i></i><i></i></div>
+        <b>Music will play after the ad</b>
+      </div>
       <div class="arm" aria-hidden="true">
         <svg viewBox="0 0 100 180" fill="none">
           <circle cx="78" cy="18" r="14" fill="rgba(255,255,255,.18)"/><circle cx="78" cy="18" r="6" fill="#FFD7A3"/>
@@ -433,6 +456,7 @@ function paintRow(id){const m=titles[id];document.querySelectorAll(`.row[data-id
 function showNow(){
   if(!ready||!player.getVideoData)return;
   const d=player.getVideoData();if(!d||!d.video_id)return;
+  if(curId!==d.video_id){lastT=-1;stallAt=Date.now()}
   curId=d.video_id;
   if(!titles[curId]&&d.title){titles[curId]=clean(d.title,d.author);store.set("osfm.titles",titles);paintRow(curId)}
   const m=titles[curId]||{t:d.title,a:d.author};
@@ -501,6 +525,7 @@ function load(autoplay,index=0){
   if(!ready){pending={autoplay,index};return}
   if(station.isLiked&&!liked.length)return;
   const fn=autoplay?"loadPlaylist":"cuePlaylist";
+  if(autoplay)expectPlay();
   if(autoplay)started=true;
   if(station.isLiked)player[fn]([...liked],index);
   else if(station.video)player[fn]([station.video],0);
@@ -524,7 +549,7 @@ window.onYouTubeIframeAPIReady=function(){
       onStateChange(e){
         const S=YT.PlayerState;
         if(e.data===S.PLAYING){started=true;setPlaying(true);showNow()}
-        else if(e.data===S.PAUSED)setPlaying(false);
+        else if(e.data===S.PAUSED){setPlaying(false);if(!document.body.classList.contains("on-break")){wantPlay=false}}
         else if(e.data===S.ENDED)setPlaying(false);
         else if(e.data===S.BUFFERING||e.data===S.CUED)showNow();
       },
@@ -549,8 +574,8 @@ $("vol").style.setProperty("--p","80%");
 /* controls */
 function togglePlay(){
   if(!ready)return toast("Getting the music ready…");
-  if(!started){started=true;player.playVideo();return}
-  isPlaying?player.pauseVideo():player.playVideo();
+  if(!started){started=true;expectPlay();player.playVideo();return}
+  if(isPlaying||document.body.classList.contains("on-break")){wantPlay=false;setBreak(false);player.pauseVideo()}else{expectPlay();player.playVideo()}
 }
 /* ---------- Site-wide search ----------
    A second invisible player reads every playlist's song list once
@@ -625,10 +650,26 @@ $("results").addEventListener("click",e=>{
   const s=STATIONS.find(x=>x.key===b.dataset.k),i=+b.dataset.i;
   station=s;store.set("osfm.station",s.key);ids=songIndex[s.list||s.video].ids.slice();
   renderStations();renderList();$("npStation").textContent=s.name;
-  started=true;if(s.video)player.loadPlaylist([s.video],0);else player.loadPlaylist({list:s.list,listType:"playlist",index:i});waitList();
+  started=true;expectPlay();if(s.video)player.loadPlaylist([s.video],0);else player.loadPlaylist({list:s.list,listType:"playlist",index:i});waitList();
   $("results").hidden=true;$("q").value="";$("q").blur();
   document.querySelector(".player").scrollIntoView({behavior:"smooth",block:"start"});
 });
+/* Shows the overlay when the song hasn't started yet (an ad or slow internet). */
+let wantPlay=false,lastT=-1,stallAt=0;
+function expectPlay(){wantPlay=true;lastT=-1;stallAt=Date.now()}
+function setBreak(on){
+  if(document.body.classList.contains("on-break")===on)return;
+  document.body.classList.toggle("on-break",on);
+  $("miniA").textContent=on?"Starting after a short break…":((titles[curId]||{}).a||"");
+  $("liveTxt").textContent=on?"Up next":(isPlaying?"On air":"Paused");
+}
+setInterval(()=>{
+  if(!ready||!wantPlay||!player.getCurrentTime){setBreak(false);return}
+  const c=player.getCurrentTime()||0,now=Date.now();
+  if(lastT<0){lastT=c;stallAt=now;return}
+  if(c>lastT+0.05){lastT=c;stallAt=now;setBreak(false)}
+  else if(now-stallAt>2500)setBreak(true);
+},400);
 $("play").onclick=togglePlay;$("miniPlay").onclick=togglePlay;
 function menu(open){
   const d=$("drawer"),s=$("scrim");
@@ -639,8 +680,8 @@ $("menuBtn").onclick=()=>menu(true);$("menuClose").onclick=()=>menu(false);$("sc
 document.addEventListener("keydown",e=>{if(e.key==="Escape")menu(false)});
 $("drawerList").onclick=e=>{const b=e.target.closest(".pl");if(!b)return;menu(false);selectStation(b.dataset.k,true);document.querySelector(".player").scrollIntoView({behavior:"smooth",block:"start"})};
 new IntersectionObserver(([en])=>$("mini").hidden=!(!en.isIntersecting&&started&&window.innerWidth<=900),{threshold:.15}).observe(document.querySelector(".player"));
-$("next").onclick=()=>ready&&player.nextVideo();
-$("prev").onclick=()=>{if(!ready)return;player.getCurrentTime()>4?player.seekTo(0,true):player.previousVideo()};
+$("next").onclick=()=>{if(ready){expectPlay();player.nextVideo()}};
+$("prev").onclick=()=>{if(!ready)return;if(player.getCurrentTime()>4)player.seekTo(0,true);else{expectPlay();player.previousVideo()}};
 $("shuf").onclick=e=>{shuffle=!shuffle;const b=e.currentTarget;b.classList.toggle("on",shuffle);b.classList.toggle("dim",!shuffle);b.setAttribute("aria-pressed",shuffle);if(ready)player.setShuffle(shuffle);toast(shuffle?"Shuffle on":"Shuffle off")};
 function toggleLike(id){
   if(!id)return;liked=liked.includes(id)?liked.filter(x=>x!==id):[...liked,id];store.set("osfm.liked",liked);
@@ -652,7 +693,7 @@ $("likeNow").onclick=()=>toggleLike(curId);
 $("stations").onclick=e=>{const b=e.target.closest(".chip");if(b){selectStation(b.dataset.k,true);if(window.innerWidth<=900)document.querySelector(".player").scrollIntoView({behavior:"smooth",block:"start"})}};
 $("list").addEventListener("click",e=>{
   const h=e.target.closest("[data-like]");if(h){toggleLike(h.dataset.like);return}
-  const r=e.target.closest(".row");if(r&&r.dataset.i&&ready){started=true;player.playVideoAt(+r.dataset.i)}
+  const r=e.target.closest(".row");if(r&&r.dataset.i&&ready){started=true;expectPlay();player.playVideoAt(+r.dataset.i)}
 });
 $("list").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("row")){e.preventDefault();e.target.click()}});
 document.addEventListener("keydown",e=>{if(e.code==="Space"&&!/INPUT|BUTTON|LI/.test(e.target.tagName)){e.preventDefault();togglePlay()}});
