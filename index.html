@@ -112,7 +112,6 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
 .songs-head{display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px 10px}
 .songs-head h2{margin:0;font-family:var(--serif);font-weight:400;font-size:26px;line-height:1}
 .songs-head span{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.08em}
-.search{display:flex;align-items:center;gap:10px;margin:2px 4px 10px;padding:11px 16px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid var(--line);color:var(--muted);transition:border-color .2s,background .2s}
 .search:focus-within{border-color:rgba(255,194,209,.55);background:rgba(255,255,255,.1)}
 .search svg{width:18px;height:18px;flex:none}
 .search input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);font-size:16px}
@@ -137,17 +136,18 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
 .res-msg{padding:16px;text-align:center;color:var(--muted);font-size:14px}
 .res-head{padding:10px 10px 6px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--blush)}
 @media (max-width:600px){
-  header .wrap{gap:10px;padding-block:10px}
-  .logo{font-size:19px}
-  .gsearch-wrap{max-width:none;margin:0}
-  .search{height:36px;padding:0 12px;gap:8px}
-  .search svg{width:15px;height:15px}
-  .search input{font-size:16px}
-  .menu-btn{width:36px;height:36px;margin-right:-6px}
-  .menu-btn svg{width:22px;height:22px}
-  .results{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 62px);max-height:70vh}
+  header .wrap{gap:10px;padding-block:10px;align-items:center}
+  header .logo{font-size:25px;height:42px;display:flex;align-items:center;line-height:1}
+  header .hdr-right{height:42px;display:flex;align-items:center}
+  header .gsearch-wrap{max-width:none;margin:0;height:42px;display:flex;align-items:center}
+  header .search{width:100%;margin:0;height:42px;padding:0 12px;gap:8px}
+  header .search svg{width:16px;height:16px}
+  header .search input{font-size:16px;height:100%}
+  header .menu-btn{width:42px;height:42px;margin-right:-8px}
+  header .menu-btn svg{width:24px;height:24px}
+  .results{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 68px);max-height:70vh}
 }
-@media (max-width:350px){.logo i{display:none}}
+@media (max-width:360px){header .logo{font-size:22px}}
 ol.list{list-style:none;margin:0;padding:0;max-height:min(62vh,640px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
 .row{display:grid;grid-template-columns:22px 48px minmax(0,1fr) 40px;gap:14px;align-items:center;padding:8px 10px;border-radius:16px;cursor:pointer;transition:background .15s}
 .row:hover{background:var(--glass-2)}
@@ -210,17 +210,27 @@ ol.list{list-style:none;margin:0;padding:0;max-height:min(62vh,640px);overflow-y
 .mini .bar{position:absolute;left:18px;right:18px;bottom:2px;height:2px;border-radius:2px;background:rgba(255,255,255,.1);overflow:hidden}
 .mini .bar i{display:block;height:100%;width:var(--p,0%);background:linear-gradient(90deg,var(--rose),var(--gold))}
 
-/* "Song starts after the ad" overlay */
-.brk{position:absolute;inset:6%;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:16%;
-  background:radial-gradient(circle,rgba(30,12,48,.9) 55%,rgba(30,12,48,.75));backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-  box-shadow:0 0 0 1px rgba(255,194,209,.25),0 0 60px -10px rgba(255,111,145,.6);opacity:0;transform:scale(.94);pointer-events:none;transition:opacity .35s,transform .35s}
-.brk b{font-family:var(--serif);font-weight:400;font-size:24px;line-height:1.1;color:#fff}
-.brk span{font-size:12px;line-height:1.45;color:var(--muted)}
+/* "Music will play after the ad" popup: appears and closes on its own */
+.adpop{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:24px;
+  background:radial-gradient(60% 45% at 50% 50%,rgba(40,18,64,.35),rgba(14,6,26,.18) 70%,transparent);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .6s ease,visibility .6s}
+.adcard{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:30px 36px 26px;border-radius:36px;max-width:320px;isolation:isolate;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(26px) saturate(150%);-webkit-backdrop-filter:blur(26px) saturate(150%);
+  box-shadow:0 20px 70px -24px rgba(0,0,0,.55);transform:translateY(12px) scale(.97);transition:transform .7s cubic-bezier(.25,.8,.25,1)}
+.adcard::before,.adcard::after{content:"";position:absolute;z-index:-1;border-radius:50%;filter:blur(30px);opacity:.55;pointer-events:none}
+.adcard::before{width:180px;height:140px;left:-30px;top:-20px;background:radial-gradient(circle,rgba(255,140,170,.55),transparent 70%);animation:smoke1 7s ease-in-out infinite alternate}
+.adcard::after{width:200px;height:150px;right:-40px;bottom:-30px;background:radial-gradient(circle,rgba(170,120,255,.5),transparent 70%);animation:smoke2 8s ease-in-out infinite alternate}
+@keyframes smoke1{from{transform:translate(0,0) scale(1)}to{transform:translate(40px,20px) scale(1.25)}}
+@keyframes smoke2{from{transform:translate(0,0) scale(1.1)}to{transform:translate(-40px,-16px) scale(.9)}}
+.adcard b{font-family:var(--serif);font-weight:400;font-size:25px;line-height:1.15;color:rgba(255,255,255,.95);text-wrap:balance;text-shadow:0 2px 20px rgba(0,0,0,.35)}
+.addisc{width:60px;height:60px;opacity:.9;border-radius:50%;background:repeating-radial-gradient(circle,#141018 0 1.5px,#1d1822 2px 3px);box-shadow:0 0 0 4px rgba(255,255,255,.06),0 0 40px -6px rgba(255,111,145,.7);display:grid;place-items:center;animation:spin 3s linear infinite}
+.addisc i{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--rose),var(--gold));box-shadow:inset 0 0 0 9px transparent}
 .brk-dots{display:flex;gap:6px}
 .brk-dots i{width:7px;height:7px;border-radius:50%;background:var(--rose);animation:bounce 1.2s infinite ease-in-out}
 .brk-dots i:nth-child(2){animation-delay:.15s}.brk-dots i:nth-child(3){animation-delay:.3s}
 @keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.5}40%{transform:translateY(-6px);opacity:1}}
-.on-break .brk{opacity:1;transform:none}
+.on-break .adpop{opacity:1;visibility:visible}
+.on-break .adcard{transform:none}
 .on-break .vinyl{animation-play-state:paused}
 .on-break .arm{transform:rotate(-24deg)}
 .on-break .row.cur .n::after{animation-play-state:paused}
@@ -295,10 +305,6 @@ footer .by b{font-family:var(--serif);font-style:italic;font-weight:400;font-siz
   <section class="glass player" aria-label="Now playing">
     <div class="vinyl-wrap">
       <div class="vinyl"><div class="label" id="art"></div></div>
-      <div class="brk" id="brk" role="status" aria-live="polite">
-        <div class="brk-dots"><i></i><i></i><i></i></div>
-        <b>Music will play after the ad</b>
-      </div>
       <div class="arm" aria-hidden="true">
         <svg viewBox="0 0 100 180" fill="none">
           <circle cx="78" cy="18" r="14" fill="rgba(255,255,255,.18)"/><circle cx="78" cy="18" r="6" fill="#FFD7A3"/>
@@ -332,7 +338,7 @@ footer .by b{font-family:var(--serif);font-style:italic;font-weight:400;font-siz
   <div class="side">
     <div class="hello">
       <h1>Love songs that <i>never get old.</i></h1>
-      <p>Bollywood's greatest romantic hits from the 80s, 90s and 2000s, playing nonstop.</p>
+      <p>Bollywood's greatest hits from the 80s, 90s and 2000s, playing nonstop.</p>
     </div>
     <div class="stations" id="stations" role="group" aria-label="Playlists"></div>
     <section class="glass songs" aria-label="Songs">
@@ -359,6 +365,14 @@ footer .by b{font-family:var(--serif);font-style:italic;font-weight:400;font-siz
   <p class="tip">Tip: tap ♥ on a song to save it to Liked songs.<br><br>OldSkool.fm · crafted with ♥ by <b style="color:var(--blush);font-family:var(--serif);font-style:italic;font-weight:400;font-size:16px">Ekant Shukla</b></p>
 </nav>
 
+
+<div class="adpop" id="adpop" role="status" aria-live="polite" aria-hidden="true">
+  <div class="adcard">
+    <div class="addisc"><i></i></div>
+    <b>Music will play after the ad</b>
+    <div class="brk-dots"><i></i><i></i><i></i></div>
+  </div>
+</div>
 
 <div id="engine"><div id="yt"></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -660,6 +674,7 @@ function expectPlay(){wantPlay=true;lastT=-1;stallAt=Date.now()}
 function setBreak(on){
   if(document.body.classList.contains("on-break")===on)return;
   document.body.classList.toggle("on-break",on);
+  $("adpop").setAttribute("aria-hidden",String(!on));
   $("miniA").textContent=on?"Starting after a short break…":((titles[curId]||{}).a||"");
   $("liveTxt").textContent=on?"Up next":(isPlaying?"On air":"Paused");
 }
@@ -668,7 +683,7 @@ setInterval(()=>{
   const c=player.getCurrentTime()||0,now=Date.now();
   if(lastT<0){lastT=c;stallAt=now;return}
   if(c>lastT+0.05){lastT=c;stallAt=now;setBreak(false)}
-  else if(now-stallAt>2500)setBreak(true);
+  else if(now-stallAt>1000)setBreak(true);
 },400);
 $("play").onclick=togglePlay;$("miniPlay").onclick=togglePlay;
 function menu(open){
