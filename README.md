@@ -1,7 +1,7 @@
 # OldSkool.fm
 
 80s, 90s and 2000s Bollywood classics, nonstop. Free, no login.
-Songs stream from public YouTube Music playlists and play right on the page.
+Audio-only player. Songs stream from public YouTube playlists of Hindi classics.
 
 ## Put it online with GitHub Pages
 
