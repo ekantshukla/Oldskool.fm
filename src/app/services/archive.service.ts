@@ -1,6 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Injectable } from '@angular/core';
 
 import {
   ArchiveDoc, ArchiveFile, ArchiveMetadataResponse, ArchiveScrapeResponse, ArchiveSearchResponse,
@@ -17,53 +15,42 @@ const EXCLUDE_NAME = /bhojpuri|karaoke|instrumental/i;
 /** Most songs taken from a single album, so one album can't fill a playlist. */
 const MAX_SONGS_PER_ITEM = 40;
 
+/** Tries per request before giving up (archive.org sometimes answers slowly or says "too many requests"). */
+const ATTEMPTS = 3;
+
 /**
  * Talks to the Internet Archive (archive.org). No API key needed.
+ * Uses plain fetch(), so the same code also runs in the build script (scripts/build-playlists.ts).
  *  - search():   find albums matching a query, most downloaded first
  *  - getSongs(): list the playable MP3 songs inside one album
  */
 @Injectable({ providedIn: 'root' })
 export class ArchiveService {
-  private readonly http = inject(HttpClient);
   private readonly baseUrl = 'https://archive.org';
 
   /** Albums matching `query`, or null if archive.org couldn't be reached. */
   async search(query: string, rows = 36): Promise<ArchiveDoc[] | null> {
     const q = `mediatype:audio AND (${query}) AND ${EXCLUDE_QUERY}`;
 
-    try {
-      const params = new HttpParams()
-        .set('q', q)
-        .append('fl[]', 'identifier').append('fl[]', 'title').append('fl[]', 'creator').append('fl[]', 'downloads')
-        .set('sort[]', 'downloads desc')
-        .set('rows', rows)
-        .set('page', 1)
-        .set('output', 'json');
-      const res = await firstValueFrom(this.http.get<ArchiveSearchResponse>(`${this.baseUrl}/advancedsearch.php`, { params }));
-      if (res.response?.docs) return res.response.docs;
-    } catch {
-      /* try the backup endpoint below */
-    }
+    const params = new URLSearchParams([
+      ['q', q], ['fl[]', 'identifier'], ['fl[]', 'title'], ['fl[]', 'creator'], ['fl[]', 'downloads'],
+      ['sort[]', 'downloads desc'], ['rows', String(rows)], ['page', '1'], ['output', 'json'],
+    ]);
+    const res = await this.getJson<ArchiveSearchResponse>(`${this.baseUrl}/advancedsearch.php?${params}`);
+    if (res?.response?.docs) return res.response.docs;
 
-    try {
-      const params = new HttpParams()
-        .set('q', q)
-        .set('fields', 'identifier,title,creator,downloads')
-        .set('sorts', 'downloads desc')
-        .set('count', 100);
-      const res = await firstValueFrom(this.http.get<ArchiveScrapeResponse>(`${this.baseUrl}/services/search/v1/scrape`, { params }));
-      if (res.items) return res.items.slice(0, rows);
-    } catch {
-      /* archive.org unreachable */
-    }
-    return null;
+    // Backup search endpoint
+    const backup = new URLSearchParams([
+      ['q', q], ['fields', 'identifier,title,creator,downloads'], ['sorts', 'downloads desc'], ['count', '100'],
+    ]);
+    const res2 = await this.getJson<ArchiveScrapeResponse>(`${this.baseUrl}/services/search/v1/scrape?${backup}`);
+    return res2?.items ? res2.items.slice(0, rows) : null;
   }
 
   /** Playable songs in one album, in track order. Empty if the album is gone or restricted. */
   async getSongs(itemId: string): Promise<Song[]> {
     try {
-      const res = await firstValueFrom(
-        this.http.get<ArchiveMetadataResponse>(`${this.baseUrl}/metadata/${encodeURIComponent(itemId)}`));
+      const res = await this.getJson<ArchiveMetadataResponse>(`${this.baseUrl}/metadata/${encodeURIComponent(itemId)}`);
       if (!res || !Array.isArray(res.files) || res.is_dark) return [];
 
       const meta = res.metadata ?? {};
@@ -111,6 +98,21 @@ export class ArchiveService {
   /** Album cover (archive.org picks the item's main image). */
   thumbnailUrl(itemId: string): string {
     return `${this.baseUrl}/services/img/${encodeURIComponent(itemId)}`;
+  }
+
+  /** GET a JSON URL, retrying on network errors, "too many requests" and server errors. Null if it never works. */
+  private async getJson<T>(url: string): Promise<T | null> {
+    for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) return (await res.json()) as T;
+        if (res.status !== 429 && res.status < 500) return null; // e.g. 404: retrying won't help
+      } catch {
+        /* network error: retry */
+      }
+      if (attempt < ATTEMPTS) await new Promise(done => setTimeout(done, 800 * attempt));
+    }
+    return null;
   }
 
   /** Title and artist from the file's tags, falling back to its file name. */

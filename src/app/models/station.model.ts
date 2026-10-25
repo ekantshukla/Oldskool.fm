@@ -22,7 +22,7 @@ export interface Station {
   backupQuery?: string;
   /** archive.org item IDs that always play first */
   items?: string[];
-  /** A hand-picked list of songs, played in this order (e.g. Classical Drive) */
+  /** A hand-picked list of songs, played in this order (e.g. Nostalgic Long Drive) */
   songList?: SongRequest[];
 
   /** The "Liked" playlist, filled from the visitor's own hearts */

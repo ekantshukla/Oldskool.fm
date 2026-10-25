@@ -14,7 +14,7 @@ import { CLASSICAL_DRIVE } from './classical-drive';
  *  items        archive.org item IDs that always play first
  *               (the part after archive.org/details/ in a link)
  *  songList     a hand-picked list of songs, played in order
- *               (see classical-drive.ts)
+ *               (see classical-drive.ts, used by Nostalgic Long Drive)
  *
  *  Tip: try a search on https://archive.org/search (choose "Audio") first.
  * ==========================================================================
@@ -25,11 +25,6 @@ export const HINDI = '(bollywood OR "hindi film" OR "hindi songs" OR "hindi movi
 
 export const STATIONS: Station[] = [
   // ---- Start here
-  {
-    key: 'drive', group: 'Start here', name: 'Classical Drive', subtitle: 'Bollywood long-drive classics',
-    mark: '🚗', color: '#FF7A59', badge: 'Hand-picked',
-    songList: CLASSICAL_DRIVE,
-  },
   {
     key: 'top', group: 'Start here', name: 'Top Classics', subtitle: 'Most downloaded evergreens',
     mark: '★', color: '#FFB36B', badge: 'Most played',
@@ -55,6 +50,11 @@ export const STATIONS: Station[] = [
   },
 
   // ---- Moods
+  {
+    key: 'drive', group: 'Moods', name: 'Nostalgic Long Drive', subtitle: 'Hand-picked highway classics',
+    mark: '🚗', color: '#FF7A59', badge: 'Hand-picked',
+    songList: CLASSICAL_DRIVE,
+  },
   {
     key: 'rom', group: 'Moods', name: 'Romantic', subtitle: 'Pyaar, ishq, mohabbat', mark: '♡', color: '#FF4F8B',
     query: `${HINDI} AND (romantic OR "love songs" OR love)`,

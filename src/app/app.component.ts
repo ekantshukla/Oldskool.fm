@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 
+import { LIKED_STATION } from './data/stations';
 import { BokehBackgroundComponent } from './components/bokeh-background/bokeh-background.component';
 import { HeaderComponent } from './components/header/header.component';
+import { IconComponent } from './components/icon/icon.component';
 import { MiniPlayerComponent } from './components/mini-player/mini-player.component';
 import { PlayerCardComponent } from './components/player-card/player-card.component';
 import { PlaylistDrawerComponent } from './components/playlist-drawer/playlist-drawer.component';
@@ -16,7 +18,7 @@ import { PlayerService } from './services/player.service';
 @Component({
   selector: 'app-root',
   imports: [
-    BokehBackgroundComponent, HeaderComponent, MiniPlayerComponent, PlayerCardComponent, PlaylistDrawerComponent,
+    BokehBackgroundComponent, HeaderComponent, IconComponent, MiniPlayerComponent, PlayerCardComponent, PlaylistDrawerComponent,
     SongListComponent, StationChipsComponent, ToastComponent, TuningPopupComponent,
   ],
   templateUrl: './app.component.html',
@@ -25,12 +27,13 @@ import { PlayerService } from './services/player.service';
   host: { '(document:keydown)': 'onKeydown($event)' },
 })
 export class AppComponent {
-  private readonly library = inject(LibraryService);
+  protected readonly library = inject(LibraryService);
   protected readonly player = inject(PlayerService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly playerCard = viewChild.required(PlayerCardComponent, { read: ElementRef });
 
   protected readonly menuOpen = signal(false);
+  protected readonly year = new Date().getFullYear();
   private readonly playerCardVisible = signal(true);
   /** Phones only (hidden by CSS on wide screens): show once the big player scrolls away. */
   protected readonly showMini = computed(() => this.player.started() && !this.playerCardVisible());
@@ -44,6 +47,13 @@ export class AppComponent {
       observer.observe(this.playerCard().nativeElement);
       this.destroyRef.onDestroy(() => observer.disconnect());
     });
+  }
+
+  /** Opens the visitor's liked songs (and plays them, if there are any). */
+  protected openLiked(): void {
+    this.player.playStation(LIKED_STATION);
+    // On phones the list sits below the player, so bring it into view.
+    if (window.innerWidth <= 900) document.querySelector('app-song-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   /** Space bar plays / pauses, unless typing or on a button. */

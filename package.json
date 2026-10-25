@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "playlists": "esbuild scripts/build-playlists.ts --bundle --platform=node --format=esm --tsconfig=tsconfig.app.json --outfile=.scripts/build-playlists.mjs --log-level=warning && node .scripts/build-playlists.mjs"
   },
   "private": true,
   "packageManager": "npm@10.9.9",
@@ -24,6 +25,7 @@
     "@angular/build": "^22.2.2",
     "@angular/cli": "^22.2.2",
     "@angular/compiler-cli": "^22.2.0",
+    "esbuild": "0.28.2",
     "prettier": "^3.8.1",
     "typescript": "~6.0.2"
   }

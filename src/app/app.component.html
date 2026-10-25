@@ -7,7 +7,17 @@
 
   <div class="side">
     <section class="hello">
-      <h1>Love songs that <i>never get old.</i></h1>
+      <div class="hello-top">
+        <h1>Love songs that <i>never get old.</i></h1>
+        <button class="liked-btn" type="button" aria-label="Liked songs"
+                [attr.aria-pressed]="!!library.selected().isLiked" (click)="openLiked()">
+          <app-icon name="heart-filled" />
+          <span class="label">Liked</span>
+          @if (library.liked().length) {
+            <span class="count">{{ library.liked().length }}</span>
+          }
+        </button>
+      </div>
       <p>Bollywood's greatest hits from the 80s, 90s and 2000s, playing nonstop. No ads.</p>
     </section>
     <app-station-chips class="chips-area" />
@@ -20,9 +30,8 @@
 }
 
 <footer>
-  <div>OldSkool.fm · made for late-night drives and old memories</div>
-  <div>Songs stream free from the <a href="https://archive.org" target="_blank" rel="noopener">Internet Archive</a></div>
-  <div class="by">Crafted with ♥ by <b>Ekant Shukla</b></div>
+  <div>© {{ year }} OldSkool.fm. All rights reserved. Songs belong to their respective owners.</div>
+  <div class="by">Crafted with <span class="heart">♥</span> by <b>Ekant Shukla</b> in Bengaluru, India</div>
 </footer>
 
 <app-playlist-drawer [open]="menuOpen()" (close)="menuOpen.set(false)" />

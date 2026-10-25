@@ -35,7 +35,7 @@ export class SongListComponent {
     const n = this.songs().length;
     const count = n ? `${n} ${n === 1 ? 'SONG' : 'SONGS'}` : '';
     if (!this.loading()) return count;
-    // Hand-picked lists (Classical Drive) show how far the lookup has got.
+    // Hand-picked lists (Nostalgic Long Drive) show how far the lookup has got.
     const progress = this.library.progressFor(this.station().key);
     const status = progress ? `FINDING ${progress.done} / ${progress.total}` : 'LOADING…';
     return count ? `${count} · ${status}` : status;

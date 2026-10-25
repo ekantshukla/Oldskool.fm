@@ -23,17 +23,31 @@ npm start          # opens on http://localhost:4200
 > If you used the old single-file version, delete the old `index.html` and `.nojekyll`
 > from the repo root. This project replaces them.
 
+## Why playlists open instantly
+
+Looking up a playlist on archive.org takes dozens of requests (and Nostalgic Long Drive hundreds),
+which is slow. So it's done **ahead of time**: `scripts/build-playlists.ts` looks up every
+playlist and saves them in `playlists.json`, which ships with the site. Visitors download that
+one small file and every playlist opens in a fraction of a second.
+
+- GitHub Actions runs it before every deploy **and once a day** (03:00 India time), so removed
+  uploads drop out and new ones come in. If archive.org has a bad day, the previous lists are kept.
+- Run it yourself with `npm run playlists` (writes `public/playlists.json`; needs internet).
+  Without the file, e.g. on a fresh `npm start`, the site still works by looking songs up live.
+- After changing `stations.ts` or `classical-drive.ts`, just push: the next deploy rebuilds the lists.
+
 ## Where things are
 
 ```
+scripts/build-playlists.ts     ★ builds playlists.json at deploy time (npm run playlists)
 src/
-├── index.html                 page shell, fonts
+├── index.html                 page shell, fonts, loading screen
 ├── styles.scss                colour/type tokens + shared styles (glass, buttons, sliders)
 └── app/
     ├── app.component.*        page layout, wires the components together
     ├── data/
     │   ├── stations.ts        ★ the menu: every playlist and its archive.org search
-    │   └── classical-drive.ts ★ the hand-picked Classical Drive song list
+    │   └── classical-drive.ts ★ the hand-picked Nostalgic Long Drive song list
     ├── models/                TypeScript interfaces (Song, Station, archive.org responses)
     ├── services/
     │   ├── archive.service.ts      talks to archive.org (search, album songs, MP3 links)
@@ -77,9 +91,9 @@ Open `src/app/data/stations.ts`. Each entry is one playlist:
   https://archive.org/search (choose **Audio**) first.
 - `backupQuery` runs only if `query` finds fewer than 30 songs.
 - `items: ['some-album-id']` pins albums (the ID is the part after `archive.org/details/`).
-- `songList` plays a hand-picked list in order, like Classical Drive.
+- `songList` plays a hand-picked list in order, like Nostalgic Long Drive.
 
-## Classical Drive
+## Nostalgic Long Drive
 
 `src/app/data/classical-drive.ts` holds the song list. One line per song:
 

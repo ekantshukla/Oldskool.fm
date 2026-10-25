@@ -24,6 +24,13 @@ interface CachedStation {
   resumeAt?: number;
 }
 
+/**
+ * Made at deploy time by scripts/build-playlists.ts: every playlist, already looked up.
+ * Loading this one small file is what makes playlists open instantly.
+ */
+const PREBUILT_URL = 'playlists.json';
+export interface PrebuiltPlaylists { generatedAt: string; playlists: Record<string, Song[]>; }
+
 /** Hand-picked songs looked up at the same time. Higher = faster, but more load on archive.org. */
 const SONG_LOOKUPS_AT_ONCE = 8;
 
@@ -48,11 +55,14 @@ export class LibraryService {
   private readonly progressByStation = signal<Record<string, { done: number; total: number }>>({});
   /** Browser cache, read from storage once and kept in memory. */
   private cache: Record<string, CachedStation> = this.storage.get(KEY_CACHE, {});
+  /** The prebuilt playlists file, fetched once. */
+  private prebuilt?: Promise<Record<string, Song[]> | null>;
   /** A playlist made from a search result (an album), if any. */
   private readonly temporaryStation = signal<Station | null>(null);
 
   readonly liked = signal<Song[]>(this.readLiked());
-  readonly stations = computed<Station[]>(() => [...STATIONS, LIKED_STATION]);
+  /** Playlists shown in the menu. "Liked" has its own button next to the headline. */
+  readonly stations = computed<Station[]>(() => STATIONS);
   readonly groups = computed<StationGroup[]>(() => groupStations(this.stations()));
 
   private readonly selectedKey = signal<string>(this.storage.get(KEY_STATION, 'top'));
@@ -67,6 +77,7 @@ export class LibraryService {
   findStation(key: string): Station | undefined {
     const temp = this.temporaryStation();
     if (temp?.key === key) return temp;
+    if (key === LIKED_STATION.key) return LIKED_STATION;
     return this.stations().find(s => s.key === key);
   }
 
@@ -95,9 +106,25 @@ export class LibraryService {
     this.load(station);
   }
 
-  /** Fills a playlist from the browser cache, or from archive.org. Safe to call repeatedly. */
+  /**
+   * Fills a playlist. Fastest source first:
+   *  1. playlists.json shipped with the site (instant, refreshed daily by GitHub Actions)
+   *  2. this browser's cache
+   *  3. live lookups on archive.org (slow; also used for albums opened from search)
+   * Safe to call repeatedly.
+   */
   async load(station: Station): Promise<void> {
     if (station.isLiked || this.loadingByStation()[station.key] !== undefined) return;
+
+    if (!station.isTemporary) {
+      this.setLoading(station.key, true);
+      const ready = (await this.loadPrebuilt())?.[station.key];
+      if (ready?.length) {
+        this.setSongs(station.key, ready);
+        this.setLoading(station.key, false);
+        return;
+      }
+    }
 
     const cached = this.readCache()[station.key];
     if (cached && cached.version === CACHE_VERSION && Date.now() - cached.savedAt < CACHE_DAYS * 864e5 && cached.songs.length) {
@@ -188,6 +215,19 @@ export class LibraryService {
   });
 
   // ---- private helpers ----------------------------------------------------
+
+  /** Fetches playlists.json once. Null when it's missing (e.g. `npm start` before running `npm run playlists`). */
+  private loadPrebuilt(): Promise<Record<string, Song[]> | null> {
+    if (!this.prebuilt) {
+      this.prebuilt = typeof document === 'undefined'
+        ? Promise.resolve(null) // running in the build script itself
+        : fetch(PREBUILT_URL)
+            .then(res => (res.ok ? (res.json() as Promise<PrebuiltPlaylists>) : null))
+            .then(file => file?.playlists ?? null)
+            .catch(() => null);
+    }
+    return this.prebuilt;
+  }
 
   /**
    * Looks up hand-picked songs, several at a time, and adds the ones found in list order.
