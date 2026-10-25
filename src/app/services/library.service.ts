@@ -14,9 +14,18 @@ const KEY_CACHE = 'osfm.v4.songs';
 const KEY_LIKED = 'osfm.v4.liked';
 const KEY_STATION = 'osfm.station';
 /** Bump when the cached song format changes, so old caches are ignored. */
-const CACHE_VERSION = 4;
+const CACHE_VERSION = 5;
 
-interface CachedStation { version: number; savedAt: number; songs: Song[]; }
+interface CachedStation {
+  version: number;
+  savedAt: number;
+  songs: Song[];
+  /** For hand-picked lists: where to carry on looking next visit. Missing = list complete. */
+  resumeAt?: number;
+}
+
+/** Hand-picked songs looked up at the same time. Higher = faster, but more load on archive.org. */
+const SONG_LOOKUPS_AT_ONCE = 8;
 
 /** A song found by search, with where it lives. */
 export interface SongMatch { song: Song; station: Station; index: number; haystack: string; }
@@ -35,6 +44,10 @@ export class LibraryService {
   private readonly songsByStation = signal<Record<string, Song[]>>({});
   /** true = loading, false = finished, missing = not started */
   private readonly loadingByStation = signal<Record<string, boolean>>({});
+  /** Hand-picked lists only: how many songs have been looked up so far. */
+  private readonly progressByStation = signal<Record<string, { done: number; total: number }>>({});
+  /** Browser cache, read from storage once and kept in memory. */
+  private cache: Record<string, CachedStation> = this.storage.get(KEY_CACHE, {});
   /** A playlist made from a search result (an album), if any. */
   private readonly temporaryStation = signal<Station | null>(null);
 
@@ -65,6 +78,11 @@ export class LibraryService {
     return this.loadingByStation()[key] === true;
   }
 
+  /** e.g. { done: 24, total: 200 } while a hand-picked list is being looked up. */
+  progressFor(key: string): { done: number; total: number } | undefined {
+    return this.progressByStation()[key];
+  }
+
   isFinished(key: string): boolean {
     return key === LIKED_STATION.key || this.loadingByStation()[key] === false;
   }
@@ -84,6 +102,11 @@ export class LibraryService {
     const cached = this.readCache()[station.key];
     if (cached && cached.version === CACHE_VERSION && Date.now() - cached.savedAt < CACHE_DAYS * 864e5 && cached.songs.length) {
       this.setSongs(station.key, cached.songs);
+      // A hand-picked list that was only partly looked up last time: carry on from there.
+      if (station.songList && cached.resumeAt !== undefined) {
+        this.setLoading(station.key, true);
+        await this.addFromSongList(station, station.songList, cached.resumeAt, cached.songs);
+      }
       this.setLoading(station.key, false);
       return;
     }
@@ -118,7 +141,7 @@ export class LibraryService {
       }
     };
 
-    if (station.songList?.length) songs = await this.addFromSongList(station, station.songList);
+    if (station.songList?.length) songs = await this.addFromSongList(station, station.songList, 0, []);
     if (station.items?.length) await addFromItems(station.items);
     if (station.query) await addFromItems(usableIds(await this.archive.search(station.query)));
     if (station.backupQuery && songs.length < MIN_SONGS_BEFORE_BACKUP) {
@@ -126,7 +149,8 @@ export class LibraryService {
     }
 
     this.setLoading(station.key, false);
-    if (songs.length && !station.isTemporary) this.writeCache(station.key, songs);
+    // Hand-picked lists save as they go (see addFromSongList).
+    if (songs.length && !station.isTemporary && !station.songList) this.writeCache(station.key, songs);
   }
 
   isLiked(song: Song | null): boolean {
@@ -165,20 +189,33 @@ export class LibraryService {
 
   // ---- private helpers ----------------------------------------------------
 
-  /** Looks up each hand-picked song (four at a time) and adds the ones found, in list order. */
-  private async addFromSongList(station: Station, requests: SongRequest[]): Promise<Song[]> {
-    let songs: Song[] = [];
-    const seen = new Set<string>();
-    for (let i = 0; i < requests.length; i += 4) {
-      const found = await Promise.all(requests.slice(i, i + 4).map(r => this.finder.find(r)));
+  /**
+   * Looks up hand-picked songs, several at a time, and adds the ones found in list order.
+   * Progress is saved after every batch, so a visitor who leaves early doesn't start over.
+   */
+  private async addFromSongList(station: Station, requests: SongRequest[], start: number, already: Song[]): Promise<Song[]> {
+    let songs = already;
+    const seen = new Set(songs.map(songKey));
+    const total = requests.length;
+
+    for (let i = start; i < total; i += SONG_LOOKUPS_AT_ONCE) {
+      this.setProgress(station.key, i, total);
+      const found = await Promise.all(requests.slice(i, i + SONG_LOOKUPS_AT_ONCE).map(r => this.finder.find(r)));
       const fresh = found.filter((s): s is Song => !!s && !seen.has(songKey(s)));
       fresh.forEach(s => seen.add(songKey(s)));
       if (fresh.length) {
         songs = [...songs, ...fresh];
         this.setSongs(station.key, songs);
       }
+      const next = i + SONG_LOOKUPS_AT_ONCE;
+      if (songs.length) this.writeCache(station.key, songs, next < total ? next : undefined);
     }
+    this.setProgress(station.key, total, total);
     return songs;
+  }
+
+  private setProgress(key: string, done: number, total: number): void {
+    this.progressByStation.update(map => ({ ...map, [key]: { done: Math.min(done, total), total } }));
   }
 
   private setSongs(key: string, songs: Song[]): void {
@@ -190,13 +227,15 @@ export class LibraryService {
   }
 
   private readCache(): Record<string, CachedStation> {
-    return this.storage.get<Record<string, CachedStation>>(KEY_CACHE, {});
+    return this.cache;
   }
 
-  private writeCache(key: string, songs: Song[]): void {
-    const cache = { ...this.readCache(), [key]: { version: CACHE_VERSION, savedAt: Date.now(), songs } };
+  private writeCache(key: string, songs: Song[], resumeAt?: number): void {
+    // Keep the original save time while a list is still filling, so it still refreshes after CACHE_DAYS.
+    const savedAt = this.cache[key]?.resumeAt !== undefined ? this.cache[key].savedAt : Date.now();
+    this.cache = { ...this.cache, [key]: { version: CACHE_VERSION, savedAt, songs, resumeAt } };
     // If the browser's storage is full, keep just this playlist.
-    if (!this.storage.set(KEY_CACHE, cache)) this.storage.set(KEY_CACHE, { [key]: cache[key] });
+    if (!this.storage.set(KEY_CACHE, this.cache)) this.storage.set(KEY_CACHE, { [key]: this.cache[key] });
   }
 
   private readLiked(): Song[] {

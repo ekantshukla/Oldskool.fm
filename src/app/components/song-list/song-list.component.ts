@@ -33,9 +33,12 @@ export class SongListComponent {
 
   protected readonly countText = computed(() => {
     const n = this.songs().length;
-    if (!n) return this.loading() ? 'LOADING' : '';
-    const count = `${n} ${n === 1 ? 'SONG' : 'SONGS'}`;
-    return this.loading() ? `${count} · LOADING…` : count;
+    const count = n ? `${n} ${n === 1 ? 'SONG' : 'SONGS'}` : '';
+    if (!this.loading()) return count;
+    // Hand-picked lists (Classical Drive) show how far the lookup has got.
+    const progress = this.library.progressFor(this.station().key);
+    const status = progress ? `FINDING ${progress.done} / ${progress.total}` : 'LOADING…';
+    return count ? `${count} · ${status}` : status;
   });
 
   constructor() {

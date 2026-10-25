@@ -23,11 +23,6 @@ import { CLASSICAL_DRIVE } from './classical-drive';
 /** Words that mark an upload as Hindi film music. */
 export const HINDI = '(bollywood OR "hindi film" OR "hindi songs" OR "hindi movie" OR filmi OR hindi)';
 
-/** Search pair for a singer: their Hindi songs first, anything by them as backup. */
-function singer(name: string): Pick<Station, 'query' | 'backupQuery'> {
-  return { query: `"${name}" AND ${HINDI}`, backupQuery: `"${name}"` };
-}
-
 export const STATIONS: Station[] = [
   // ---- Start here
   {
@@ -79,42 +74,6 @@ export const STATIONS: Station[] = [
     key: 'party', group: 'Moods', name: 'Dance & Party', subtitle: 'Disco deewane', mark: '✦', color: '#FF9F43',
     query: `${HINDI} AND (dance OR disco OR party OR remix)`,
     backupQuery: `"bappi lahiri" OR (disco AND hindi)`,
-  },
-
-  // ---- Singers
-  { key: 'kishore', group: 'Singers', name: 'Kishore Kumar', subtitle: 'The voice of the 70s & 80s', mark: 'KK', color: '#E0A030', ...singer('kishore kumar') },
-  { key: 'lata', group: 'Singers', name: 'Lata Mangeshkar', subtitle: 'Nightingale of India', mark: 'LM', color: '#D46A6A', ...singer('lata mangeshkar') },
-  {
-    key: 'rafi', group: 'Singers', name: 'Mohammed Rafi', subtitle: 'Golden-era legend', mark: 'MR', color: '#B5651D',
-    query: `("mohammed rafi" OR "mohd rafi") AND ${HINDI}`,
-    backupQuery: `"mohammed rafi" OR "mohd rafi"`,
-  },
-  { key: 'asha', group: 'Singers', name: 'Asha Bhosle', subtitle: 'Cabaret to ghazal', mark: 'AB', color: '#E07AA6', ...singer('asha bhosle') },
-  { key: 'sanu', group: 'Singers', name: 'Kumar Sanu', subtitle: 'King of the 90s', mark: 'KS', color: '#C2185B', ...singer('kumar sanu') },
-  { key: 'alka', group: 'Singers', name: 'Alka Yagnik', subtitle: 'Queen of 90s duets', mark: 'AY', color: '#F06292', ...singer('alka yagnik') },
-  { key: 'udit', group: 'Singers', name: 'Udit Narayan', subtitle: 'Papa kehte hain…', mark: 'UN', color: '#8E24AA', ...singer('udit narayan') },
-  { key: 'sonu', group: 'Singers', name: 'Sonu Nigam', subtitle: '2000s heartthrob', mark: 'SN', color: '#3F7FBF', ...singer('sonu nigam') },
-
-  // ---- Composers
-  {
-    key: 'rdb', group: 'Composers', name: 'R.D. Burman', subtitle: 'Pancham da', mark: 'RD', color: '#2FC4A0',
-    query: `("r d burman" OR "r.d. burman" OR "rd burman" OR "rahul dev burman")`,
-    backupQuery: `burman AND ${HINDI}`,
-  },
-  {
-    key: 'ns', group: 'Composers', name: 'Nadeem–Shravan', subtitle: 'Aashiqui, Saajan, Raja Hindustani', mark: 'NS', color: '#FF8A7A',
-    query: `("nadeem shravan" OR "nadeem-shravan")`,
-    backupQuery: `nadeem AND shravan`,
-  },
-  {
-    key: 'jl', group: 'Composers', name: 'Jatin–Lalit', subtitle: 'Late-90s romance', mark: 'JL', color: '#F2709C',
-    query: `("jatin lalit" OR "jatin-lalit")`,
-    backupQuery: `jatin AND lalit`,
-  },
-  {
-    key: 'arr', group: 'Composers', name: 'A.R. Rahman', subtitle: 'Roja to Rang De', mark: 'AR', color: '#4A90D9',
-    query: `("a r rahman" OR "a.r. rahman" OR "ar rahman") AND ${HINDI}`,
-    backupQuery: `"a r rahman" OR "a.r. rahman" OR "ar rahman"`,
   },
 ];
 

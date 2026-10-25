@@ -11,6 +11,9 @@ import { cleanName, firstValue, parseLength } from '../utils/text.utils';
 /** Songs shorter than this are clips; longer ones are nonstop mixes. Both are skipped. */
 const MIN_SONG_SECONDS = 45;
 const MAX_SONG_SECONDS = 25 * 60;
+/** Uploads we never play: other-language and karaoke/instrumental versions. */
+const EXCLUDE_QUERY = 'NOT (bhojpuri OR karaoke OR instrumental)';
+const EXCLUDE_NAME = /bhojpuri|karaoke|instrumental/i;
 /** Most songs taken from a single album, so one album can't fill a playlist. */
 const MAX_SONGS_PER_ITEM = 40;
 
@@ -26,7 +29,7 @@ export class ArchiveService {
 
   /** Albums matching `query`, or null if archive.org couldn't be reached. */
   async search(query: string, rows = 36): Promise<ArchiveDoc[] | null> {
-    const q = `mediatype:audio AND (${query})`;
+    const q = `mediatype:audio AND (${query}) AND ${EXCLUDE_QUERY}`;
 
     try {
       const params = new HttpParams()
@@ -65,6 +68,7 @@ export class ArchiveService {
 
       const meta = res.metadata ?? {};
       if (String(meta['access-restricted-item']) === 'true') return [];
+      if (EXCLUDE_NAME.test(`${firstValue(meta.title)} ${firstValue(meta.creator)}`)) return [];
 
       const album = cleanName(firstValue(meta.title)) || itemId;
       const albumArtist = firstValue(meta.creator);
@@ -72,6 +76,7 @@ export class ArchiveService {
       // Originals first, so the de-duplication below keeps them over lower-quality copies.
       const mp3s = res.files
         .filter(f => /\.mp3$/i.test(f.name) && String(f.private) !== 'true' && !/(_sample|_preview|_spectrogram)/i.test(f.name))
+        .filter(f => !EXCLUDE_NAME.test(`${f.name} ${f.title ?? ''} ${firstValue(f.artist)}`))
         .sort((a, b) => (a.source === 'original' ? 0 : 1) - (b.source === 'original' ? 0 : 1));
 
       const seen = new Set<string>();

@@ -12,6 +12,20 @@ const KEY_VOLUME = 'osfm.vol';
 const TUNING_DELAY_MS = 1500;
 /** Stop skipping after this many songs fail in a row (probably no internet). */
 const MAX_SKIPS = 6;
+/** What was playing, so a refresh can carry on from the same song and second. */
+const KEY_RESUME = 'osfm.resume';
+/** How often the playing position is saved while a song plays. */
+const SAVE_EVERY_MS = 5000;
+
+interface SavedPlayback {
+  stationKey: string;
+  /** Kept in full for an album opened from search, which isn't in the menu. */
+  temporaryStation?: Station;
+  song: Song;
+  time: number;
+  duration: number;
+  shuffle: boolean;
+}
 
 /**
  * Plays the music. Wraps one HTML <audio> element and keeps the queue,
@@ -51,12 +65,20 @@ export class PlayerService {
   private skips = 0;
   private wantPlay = false;
   private tuningTimer?: ReturnType<typeof setTimeout>;
+  /** Second to jump to once a restored song is ready. */
+  private resumeAt = 0;
+  private lastSave = 0;
 
   constructor() {
     this.audio.preload = 'auto';
     this.audio.volume = this.volume() / 100;
     this.listenToAudio();
     this.setUpLockScreenControls();
+    this.restore();
+
+    // Save the exact position when the tab is closed, refreshed or hidden.
+    addEventListener('pagehide', () => this.save());
+    document.addEventListener('visibilitychange', () => { if (document.hidden) this.save(); });
 
     // Start a playlist the moment its first songs load.
     effect(() => {
@@ -126,7 +148,10 @@ export class PlayerService {
     this.current.set(song);
     this.started.set(true);
 
+    this.resumeAt = 0;
+    this.audio.preload = 'auto';
     this.audio.src = this.archive.songUrl(song);
+    this.save();
     this.expectPlay();
     this.audio.play().catch(err => {
       if (err?.name === 'NotAllowedError') { this.setTuning(false); this.isPlaying.set(false); }
@@ -151,12 +176,13 @@ export class PlayerService {
   next(): void {
     const songs = this.library.songsFor(this.queueKey());
     if (!songs.length) return;
+    const at = this.currentIndex(songs);
     if (this.shuffle() && songs.length > 1) {
       let pick: number;
-      do { pick = randomIndex(songs.length); } while (pick === this.index);
+      do { pick = randomIndex(songs.length); } while (pick === at);
       this.playAt(this.queueKey(), pick);
     } else {
-      this.playAt(this.queueKey(), this.index + 1);
+      this.playAt(this.queueKey(), at + 1);
     }
   }
 
@@ -166,7 +192,7 @@ export class PlayerService {
     const songs = this.library.songsFor(this.queueKey());
     const lastKey = this.history.pop();
     const lastIndex = lastKey ? songs.findIndex(s => songKey(s) === lastKey) : -1;
-    this.playAt(this.queueKey(), lastIndex >= 0 ? lastIndex : this.index - 1, true);
+    this.playAt(this.queueKey(), lastIndex >= 0 ? lastIndex : Math.max(this.currentIndex(songs), 0) - 1, true);
   }
 
   /** `fraction` from 0 to 1 */
@@ -183,6 +209,7 @@ export class PlayerService {
 
   toggleShuffle(): void {
     this.shuffle.update(on => !on);
+    this.save();
     this.toast.show(this.shuffle() ? 'Shuffle on' : 'Shuffle off');
   }
 
@@ -193,15 +220,76 @@ export class PlayerService {
 
   // ---- private ------------------------------------------------------------
 
+  /**
+   * Position of the current song in its playlist. After a refresh the playlist
+   * may still be loading, so look the song up by its key rather than trusting a number.
+   */
+  private currentIndex(songs: Song[]): number {
+    const current = this.current();
+    if (!current) return -1;
+    if (songs[this.index] && songKey(songs[this.index]) === songKey(current)) return this.index;
+    this.index = songs.findIndex(s => songKey(s) === songKey(current));
+    return this.index;
+  }
+
+  /** Remembers what's playing and where, in the visitor's browser. */
+  private save(): void {
+    const song = this.current();
+    const station = this.queueStation();
+    if (!song || !station) return;
+    this.lastSave = Date.now();
+    const saved: SavedPlayback = {
+      stationKey: station.key,
+      temporaryStation: station.isTemporary ? station : undefined,
+      song,
+      time: this.resumeAt || this.audio.currentTime || 0,
+      duration: this.duration(),
+      shuffle: this.shuffle(),
+    };
+    this.storage.set(KEY_RESUME, saved);
+  }
+
+  /**
+   * After a refresh: show the last song, paused at the second it was left.
+   * (Browsers don't allow sound before the visitor taps something, so one tap on play continues.)
+   */
+  private restore(): void {
+    const saved = this.storage.get<SavedPlayback | null>(KEY_RESUME, null);
+    if (!saved?.song?.itemId || !saved.stationKey) return;
+    const station = saved.temporaryStation ?? this.library.findStation(saved.stationKey);
+    if (!station) return;
+
+    this.library.select(station);
+    this.queueKey.set(station.key);
+    this.current.set(saved.song);
+    this.shuffle.set(!!saved.shuffle);
+    this.started.set(true);
+    this.currentTime.set(saved.time);
+    this.duration.set(saved.duration);
+
+    this.resumeAt = saved.time;
+    this.audio.preload = 'metadata';
+    this.audio.src = this.archive.songUrl(saved.song);
+  }
+
   private listenToAudio(): void {
     const a = this.audio;
     a.addEventListener('playing', () => { this.skips = 0; this.wantPlay = false; this.isPlaying.set(true); this.setTuning(false); });
     a.addEventListener('play', () => this.isPlaying.set(true));
     // Changing songs fires "pause" too, so keep "Tuning in…" up while a song is wanted.
-    a.addEventListener('pause', () => { this.isPlaying.set(false); if (!this.wantPlay) this.setTuning(false); });
+    a.addEventListener('pause', () => { this.isPlaying.set(false); if (!this.wantPlay) this.setTuning(false); this.save(); });
+    // A restored song: jump to where the visitor left off.
+    a.addEventListener('loadedmetadata', () => {
+      if (this.resumeAt > 0 && this.resumeAt < a.duration) a.currentTime = this.resumeAt;
+      this.resumeAt = 0;
+    });
     a.addEventListener('waiting', () => { if (!a.paused) this.expectPlay(); });
     a.addEventListener('ended', () => this.next());
-    a.addEventListener('timeupdate', () => this.currentTime.set(a.currentTime || 0));
+    a.addEventListener('timeupdate', () => {
+      if (this.resumeAt) return; // keep showing the saved position until the jump happens
+      this.currentTime.set(a.currentTime || 0);
+      if (!a.paused && Date.now() - this.lastSave > SAVE_EVERY_MS) this.save();
+    });
     a.addEventListener('durationchange', () => this.duration.set(isFinite(a.duration) ? a.duration : 0));
     a.addEventListener('error', () => this.onSongError());
   }

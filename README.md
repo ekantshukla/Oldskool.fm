@@ -72,7 +72,7 @@ Open `src/app/data/stations.ts`. Each entry is one playlist:
 },
 ```
 
-- `group` is the menu heading. Order in the file = order in the menu.
+- `group` is the menu heading (Start here, Eras, Moods). Order in the file = order in the menu.
 - `query` is what gets searched on archive.org, most downloaded first. Try it on
   https://archive.org/search (choose **Audio**) first.
 - `backupQuery` runs only if `query` finds fewer than 30 songs.
