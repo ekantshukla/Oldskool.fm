@@ -1,0 +1,76 @@
+/* Desktop: player card on the left, headline + playlists + songs on the right.
+   Phones: one column — headline, player, songs. */
+
+.layout {
+  display: grid;
+  grid-template-columns: 400px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+  padding-block: 8px 48px;
+}
+
+.player-area {
+  position: sticky;
+  top: calc(env(safe-area-inset-top, 0px) + var(--header-height) + 12px);
+}
+
+.side {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.hello {
+  margin: 4px 0 4px;
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(40px, 5.6vw, 68px);
+    line-height: 1;
+    margin: 0;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+
+    i { color: var(--blush); }
+  }
+
+  p {
+    margin: 14px 0 0;
+    color: var(--muted);
+    max-width: 40ch;
+    font-size: 17px;
+    line-height: 1.45;
+  }
+}
+
+.mini-area { display: none; }
+
+footer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 16px 32px;
+  color: var(--faint);
+  font-size: 13px;
+  text-align: center;
+
+  a { color: inherit; }
+  .by { color: var(--muted); }
+  .by b { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 18px; color: var(--blush); letter-spacing: 0.01em; }
+}
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .player-area { position: static; grid-row: 2; }
+  .side { display: contents; }
+  .hello { grid-row: 1; margin-bottom: 0; }
+  .songs-area { grid-row: 3; }
+  .mini-area { display: block; }
+}
+
+@media (max-width: 480px) {
+  .hello h1 { font-size: 36px; }
+  .hello p { font-size: 14px; }
+}

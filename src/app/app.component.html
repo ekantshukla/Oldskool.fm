@@ -1,0 +1,30 @@
+<app-bokeh-background />
+
+<app-header [menuOpen]="menuOpen()" (menuClick)="menuOpen.set(true)" />
+
+<main class="wrap layout">
+  <app-player-card class="player-area" />
+
+  <div class="side">
+    <section class="hello">
+      <h1>Love songs that <i>never get old.</i></h1>
+      <p>Bollywood's greatest hits from the 80s, 90s and 2000s, playing nonstop. No ads.</p>
+    </section>
+    <app-station-chips class="chips-area" />
+    <app-song-list class="songs-area" />
+  </div>
+</main>
+
+@if (showMini()) {
+  <app-mini-player class="mini-area" />
+}
+
+<footer>
+  <div>OldSkool.fm · made for late-night drives and old memories</div>
+  <div>Songs stream free from the <a href="https://archive.org" target="_blank" rel="noopener">Internet Archive</a></div>
+  <div class="by">Crafted with ♥ by <b>Ekant Shukla</b></div>
+</footer>
+
+<app-playlist-drawer [open]="menuOpen()" (close)="menuOpen.set(false)" />
+<app-tuning-popup />
+<app-toast />
