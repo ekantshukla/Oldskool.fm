@@ -104,8 +104,6 @@ footer {
   a { color: inherit; }
   .by { color: var(--muted); }
   .by .heart { color: var(--rose); }
-  // Same size as the rest of the line, keeping the italic serif style
-  .by b { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.1em; color: var(--blush); letter-spacing: 0.01em; }
 }
 
 @media (max-width: 900px) {

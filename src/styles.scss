@@ -127,6 +127,17 @@ button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
   &::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 0; }
 }
 
+/* The author's name: same font, size and colour everywhere it appears */
+.author {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.2;
+  color: var(--blush);
+  letter-spacing: 0.01em;
+}
+
 /* Shared keyframes */
 @keyframes spin { to { transform: rotate(360deg); } }
 

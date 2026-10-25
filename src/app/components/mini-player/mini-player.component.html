@@ -4,7 +4,7 @@
     <b>{{ song()?.title ?? 'OldSkool.fm' }}</b>
     <span>{{ subtitle() }}</span>
   </div>
-  <div class="by">by<b>Ekant Shukla</b></div>
+  <div class="by">by<b class="author">Ekant Shukla</b></div>
   <button class="icon-btn play-btn" type="button" [attr.aria-label]="player.isPlaying() ? 'Pause' : 'Play'"
           (click)="player.togglePlay()">
     <app-icon [name]="player.isPlaying() ? 'pause' : 'play'" />
