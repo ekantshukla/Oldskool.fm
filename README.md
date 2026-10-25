@@ -1,7 +1,8 @@
 # OldSkool.fm
 
-80s, 90s and 2000s Bollywood classics, nonstop. Free, no login.
-Audio-only player. Songs stream from public YouTube playlists of Hindi classics.
+80s, 90s and 2000s Bollywood classics, nonstop. Free, no login, **no ads**.
+Audio-only player. Songs stream straight from the [Internet Archive](https://archive.org)
+(archive.org), a free non-profit library. No YouTube, no API key, no ads.
 
 ## Put it online with GitHub Pages
 
@@ -13,39 +14,55 @@ Audio-only player. Songs stream from public YouTube playlists of Hindi classics.
 
 Share that link to test. It works on phones and computers.
 
-## Change the stations
+## How the playlists work
 
-Open `index.html` and find `const STATIONS` near the top of the script.
-Each station is one YouTube or YouTube Music playlist. To swap one:
+Each playlist is a live search on the Internet Archive. When someone opens a playlist,
+the site:
 
-1. Open the playlist on YouTube Music and copy its link, for example
-   `https://music.youtube.com/playlist?list=PLMRKdK25AuPVjHl9Kdb-gkBy0Cm7Zi2xo`
-2. Copy the part after `list=` and paste it as that station's `list` value.
-3. Change `name` and `sub` to match, then commit. The site updates in about a minute.
+1. searches archive.org for Bollywood audio that matches the playlist (for example
+   *romantic + 90s + Kumar Sanu*), most downloaded first,
+2. opens the top albums it finds and collects their MP3 songs,
+3. mixes songs from different albums, cleans up names (drops "[Songs.PK]", track
+   numbers and so on) and keeps up to 150 songs.
 
-Only public playlists work. If a playlist is deleted or made private, its station shows
-"This playlist couldn't load" until you replace it.
+Each visitor's browser remembers the song list for 3 days, so it loads instantly after the first visit.
+Because the search runs live, a playlist recovers on its own if an upload is removed from archive.org.
 
-## Most played songs first (optional, free)
+## Change or add a playlist
 
-Add a free YouTube Data API key and every playlist is sorted by YouTube views,
-so the biggest classics play first.
+Open `index.html` and find `const STATIONS` near the top of the script. Each line is one playlist:
 
-1. Go to https://console.cloud.google.com and create a project (any name).
-2. Open **APIs & Services → Library**, search **YouTube Data API v3**, click **Enable**.
-3. Open **APIs & Services → Credentials → Create credentials → API key**. Copy the key.
-4. Click the key → **Application restrictions → Websites** → add
-   `https://ekantshukla.github.io/*` → **Save**. This stops anyone else from using your key.
-5. In `index.html`, find `const YT_API_KEY = "";` and paste your key between the quotes. Commit.
+```js
+{ key:"rom", group:"Moods", name:"Romantic", sub:"Pyaar, ishq, mohabbat", mark:"♡", art:"#FF4F8B",
+  q:`${HINDI} AND (romantic OR "love songs" OR love)`, alt:`romantic AND (hindi OR bollywood)` },
+```
 
-The free quota is far more than this site needs, and the sorted list is cached in each
-visitor's browser for 3 days.
+- `group` is the heading it sits under in the menu (Start here, Eras, Moods, Singers, Composers).
+- `q` is what gets searched. Use `AND` / `OR` and put phrases in quotes, e.g. `"jagjit singh"`.
+  `${HINDI}` is shorthand for *bollywood OR hindi film OR hindi songs…*.
+- `alt` is an optional looser search, used only when `q` finds fewer than 30 songs.
+- Singers use a shortcut: `...singer("kishore kumar")` fills in both searches for you.
+- To try a search first, paste it on https://archive.org/search (choose **Audio**) and see what comes up.
+
+### Pin your favourite albums (optional)
+
+If you find an album on archive.org you love, add its ID with `items` and it always plays first:
+
+1. Open the album page, for example `https://archive.org/details/your-album-id`
+2. The ID is the part after `/details/`: `your-album-id`
+3. Add it to a station:
+   ```js
+   { key:"rom", ..., items:["your-album-id"], q:`...` },
+   ```
+
+You can use `items` without `q` to make a fully hand-picked playlist.
 
 ## Good to know
 
-- Music only plays on a real website (GitHub Pages, Netlify and so on). Opening `index.html`
-  straight from your computer may not play, because YouTube needs a proper web address.
-- If a song's owner blocks it from playing on other sites, the player skips to the next one.
-- Liked songs are saved in each visitor's own browser.
-- Ads come from YouTube. Visitors signed in to YouTube Premium in the same browser usually
-  hear no ads; everyone else may hear one now and then.
+- Search in the header finds songs from the playlists already loaded, plus albums anywhere
+  on the Internet Archive. Tap an album to play all of it.
+- Liked songs and volume are saved in each visitor's own browser.
+- If a song won't load, the player skips to the next one.
+- Song quality and naming depend on whoever uploaded them to archive.org, so some names can look messy.
+- Many Bollywood uploads on archive.org are posted by fans, not by the music labels.
+  The Archive takes uploads down when rights holders ask, so songs come and go over time.
